@@ -154,22 +154,3 @@
 .border-ig-magenta { border-color: oklch(62% .28 331); }
 
 .font-ig { font-family: Roboto, Helvetica Neue, Helvetica, Arial, sans-serif; }
-
-/* Hide Lovable badge */
-a[href*="lovable.dev"][target="_blank"],
-a[href*="lovable.dev"]:has(img[alt*="lovable" i]),
-a[href*="lovable.dev"]:has(svg),
-a[href*="lovable.dev"][rel*="noopener"],
-[href*="lovable"][data-lovable-badge],
-[data-lovable-badge] {
-  display: none !important;
-  visibility: hidden !important;
-  opacity: 0 !important;
-  pointer-events: none !important;
-  width: 0 !important;
-  height: 0 !important;
-  position: absolute !important;
-  overflow: hidden !important;
-  clip: rect(0 0 0 0) !important;
-  clip-path: inset(50%) !important;
-}
