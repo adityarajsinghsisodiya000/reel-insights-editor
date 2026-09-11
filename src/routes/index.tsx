@@ -1,8 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, ClientOnly } from "@tanstack/react-router";
 import { InsightsProvider } from "@/lib/insights-store";
 import { InsightsScreen } from "@/components/insights/InsightsScreen";
 import { DesktopFrame } from "@/components/insights/DesktopFrame";
-import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -28,16 +27,13 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted) return <div className="min-h-screen w-full max-w-[440px] mx-auto bg-[#0C1013]" />;
-
   return (
-    <InsightsProvider>
-      <DesktopFrame>
-        <InsightsScreen />
-      </DesktopFrame>
-    </InsightsProvider>
+    <ClientOnly fallback={<div className="min-h-screen w-full max-w-[440px] mx-auto bg-[#0C1013]" />}>
+      <InsightsProvider>
+        <DesktopFrame>
+          <InsightsScreen />
+        </DesktopFrame>
+      </InsightsProvider>
+    </ClientOnly>
   );
 }
