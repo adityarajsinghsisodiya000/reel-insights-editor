@@ -51,7 +51,6 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<InsightsData>(() => cloneDefaults());
   const [editMode, setEditMode] = useState(false);
   const hydrated = useRef(false);
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     try {
@@ -61,7 +60,6 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
       /* ignore */
     }
     hydrated.current = true;
-    setReady(true);
   }, []);
 
   useEffect(() => {
@@ -131,10 +129,6 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
     () => ({ data, update, reset, importData, editMode, setEditMode }),
     [data, update, reset, importData, editMode],
   );
-
-  if (!ready) {
-    return <InsightsContext.Provider value={{ data: cloneDefaults(), update: () => {}, reset: () => {}, importData: () => {}, editMode: false, setEditMode: () => {} }}>{children}</InsightsContext.Provider>;
-  }
 
   return <InsightsContext.Provider value={value}>{children}</InsightsContext.Provider>;
 }

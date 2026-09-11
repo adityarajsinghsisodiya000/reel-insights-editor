@@ -2,25 +2,22 @@ import { createFileRoute } from "@tanstack/react-router";
 import { InsightsProvider } from "@/lib/insights-store";
 import { InsightsScreen } from "@/components/insights/InsightsScreen";
 import { DesktopFrame } from "@/components/insights/DesktopFrame";
+import { useState, useEffect } from "react";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Insights Editor — Editable Reel Insights Mockup" },
+      { title: "Insights Editor" },
       {
         name: "description",
         content:
           "Design realistic Reel insights mockups: edit every stat, percentage, chart point and thumbnail directly on a mobile-first screen.",
       },
-      { property: "og:title", content: "Insights Editor — Editable Reel Insights Mockup" },
+      { property: "og:title", content: "Insights Editor" },
       {
-        property: "og:description",
-        content:
-          "A mobile-first visual editor for Reel insights screens. Hold the ⋯ button to edit any number, label, chart or image.",
+        name: "theme-color",
+        content: "#0a0a0a",
       },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { name: "theme-color", content: "#0a0a0a" },
     ],
     links: [
       { rel: "manifest", href: "/manifest.webmanifest" },
@@ -31,6 +28,11 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  if (!mounted) return <div className="min-h-screen w-full max-w-[440px] mx-auto bg-[#0C1013]" />;
+
   return (
     <InsightsProvider>
       <DesktopFrame>
