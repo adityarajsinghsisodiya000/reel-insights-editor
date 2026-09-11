@@ -1,4 +1,6 @@
 {
   "buildCommand": "NITRO_PRESET=vercel npm run build",
-  "framework": "vite"
+  "framework": null,
+  "installCommand": "npm install",
+  "outputDirectory": null
 }
