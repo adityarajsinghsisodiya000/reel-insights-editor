@@ -13,7 +13,7 @@ export function LikeIcon({ className }: IconProps) {
 export function CommentIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className ?? "h-6 w-6"}>
-      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z" strokeLinejoin="round" />
+      <path d="M20.5 11.6c0 4.3-3.8 7.8-8.5 7.8-1.2 0-2.4-.2-3.4-.7L3.5 20l1.4-4.2a7.3 7.3 0 0 1-1.4-4.2c0-4.3 3.8-7.8 8.5-7.8s8.5 3.5 8.5 7.8Z" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -21,10 +21,10 @@ export function CommentIcon({ className }: IconProps) {
 export function RepostIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className ?? "h-6 w-6"}>
-      <path d="M17 1l4 4-4 4" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M3 11V9a4 4 0 0 1 4-4h14" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M7 23l-4-4 4-4" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M21 13v2a4 4 0 0 1-4 4H3" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 9V7.5A3.5 3.5 0 0 1 7.5 4H16" strokeLinecap="round" />
+      <path d="m13.5 1.8 2.8 2.2-2.8 2.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M20 15v1.5a3.5 3.5 0 0 1-3.5 3.5H8" strokeLinecap="round" />
+      <path d="m10.5 22.2-2.8-2.2 2.8-2.2" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -32,8 +32,7 @@ export function RepostIcon({ className }: IconProps) {
 export function ShareIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className ?? "h-6 w-6"}>
-      <path d="M22 2L11 13" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M22 2L15 22l-4-9-9-4 20-7z" strokeLinejoin="round" />
+      <path d="M21.5 4.5 3 10.2l7.2 2.6 2.6 7.2 8.7-15.5Z" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -41,7 +40,7 @@ export function ShareIcon({ className }: IconProps) {
 export function SaveIcon({ className }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className ?? "h-6 w-6"}>
-      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" strokeLinejoin="round" />
+      <path d="M6 3.5h12v17l-6-4.6-6 4.6v-17Z" strokeLinejoin="round" />
     </svg>
   );
 }
