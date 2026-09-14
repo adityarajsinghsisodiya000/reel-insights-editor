@@ -10,6 +10,7 @@ export function cn(...inputs: ClassValue[]) {
  * Format a number with commas (e.g., 5000 → "5,000")
  */
 export function formatWithCommas(value: string): string {
+  if (value.trim() === "") return "";
   const num = Number(value.replace(/[^\d.-]/g, ""));
   if (!Number.isFinite(num)) return value;
   const parts = num.toString().split(".");

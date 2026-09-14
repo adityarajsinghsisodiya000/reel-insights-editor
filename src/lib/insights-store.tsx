@@ -101,7 +101,7 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
       if (viewsStat) {
         viewsStat.value = formatWithCommas(viewsStat.value);
         const viewsNum = Number(viewsStat.value.replace(/[^\d.-]/g, ""));
-        if (Number.isFinite(viewsNum) && viewersStat) {
+        if (Number.isFinite(viewsNum) && viewsNum > 0 && viewersStat) {
           const viewersNum = Math.round(viewsNum * 0.90);
           viewersStat.value = formatWithCommas(String(viewersNum));
         }
