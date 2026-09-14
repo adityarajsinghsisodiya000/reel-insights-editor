@@ -40,8 +40,8 @@ export function ShareIcon({ className }: IconProps) {
 
 export function SaveIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className ?? "h-6 w-6"}>
-      <path d="M6 3.5h12v17l-6-4.6-6 4.6v-17Z" strokeLinejoin="round" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className ?? "h-6 w-6"}>
+      <polygon points="20 21 12 13.44 4 21 4 3 20 3 20 21" />
     </svg>
   );
 }
