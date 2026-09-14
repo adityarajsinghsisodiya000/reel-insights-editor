@@ -44,7 +44,14 @@ function merge(stored: Partial<InsightsData>): InsightsData {
         ? { ...(cur as object), ...(v as object) }
         : v;
   }
-  return base as unknown as InsightsData;
+  const result = base as unknown as InsightsData;
+  const defaults = cloneDefaults();
+  for (let i = 0; i < result.overview.stats.length; i++) {
+    if (!result.overview.stats[i]?.value && defaults.overview.stats[i]) {
+      result.overview.stats[i]!.value = defaults.overview.stats[i]!.value;
+    }
+  }
+  return result;
 }
 
 export function InsightsProvider({ children }: { children: ReactNode }) {

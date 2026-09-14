@@ -35,7 +35,7 @@ export function Editable({
           setOpen(true);
         }}
         className={cn(
-          "relative rounded-md text-left align-middle outline outline-1 outline-accent/80 bg-accent/10 -mx-0.5 px-0.5",
+          "relative rounded-md text-left align-middle outline outline-1 outline-accent/80 bg-accent/10 -mx-0.5 px-0.5 min-h-[32px]",
           block ? "block w-full" : "inline-block",
           className,
         )}

@@ -90,7 +90,7 @@ export function OverviewTab() {
                 kind="number"
                 label="Stat value"
               >
-                <span className="text-[24px] font-bold text-ig-text">{s.value}</span>
+                <span className="text-[24px] font-bold text-ig-text">{s.value || "—"}</span>
               </Editable>
             </div>
           </div>
