@@ -524,10 +524,10 @@ function Field({
         type={type}
         inputMode={type === "text" ? "decimal" : undefined}
         onChange={(e) => setDraft(e.target.value)}
-        onBlur={() => onCommit(draft)}
+        onBlur={() => onCommit(draft.trim() === "" ? value : draft)}
         onKeyDown={(e) => {
           e.stopPropagation();
-          if (e.key === "Enter") onCommit(draft);
+          if (e.key === "Enter") onCommit(draft.trim() === "" ? value : draft);
         }}
         className="w-full min-w-0 rounded-lg border border-ig-line bg-ig-card px-3 py-2 text-[15px] text-ig-text outline-none focus:border-accent"
       />

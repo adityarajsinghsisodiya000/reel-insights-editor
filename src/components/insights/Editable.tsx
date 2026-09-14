@@ -88,6 +88,9 @@ export function EditorSheet({
       const n = Math.max(0, Math.min(100, Number(v.replace(/[^\d.]/g, "")) || 0));
       v = String(Math.round(n * 10) / 10);
     }
+    if (v === "") {
+      v = initial.current;
+    }
     onSave(v);
   };
 
