@@ -79,18 +79,18 @@ export function OverviewTab() {
 
       <div className="grid grid-cols-2 gap-3">
         {o.stats.map((s, i) => (
-          <div key={s.id} className="rounded-xl bg-ig-card p-4">
+          <div key={s.id} className="rounded-2xl bg-ig-card p-4">
             <Editable value={s.label} onChange={(v) => update((d) => { d.overview.stats[i]!.label = v; })} label="Stat title">
-              <span className="text-[14px] text-ig-dim">{s.label}</span>
+              <span className="text-[13px] text-ig-dim">{s.label}</span>
             </Editable>
-            <div className="mt-2">
+            <div className="mt-1">
               <Editable
                 value={s.value}
                 onChange={(v) => update((d) => { d.overview.stats[i]!.value = v; })}
                 kind="number"
                 label="Stat value"
               >
-                <span className="text-[24px] font-bold text-ig-text">{s.value || "—"}</span>
+                <span className="text-[28px] font-bold leading-tight text-ig-text">{s.value || "—"}</span>
               </Editable>
             </div>
           </div>
