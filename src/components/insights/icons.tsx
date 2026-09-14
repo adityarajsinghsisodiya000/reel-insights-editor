@@ -12,8 +12,8 @@ export function LikeIcon({ className }: IconProps) {
 
 export function CommentIcon({ className }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" className={className ?? "h-6 w-6"}>
-      <path d="M20.5 11.6c0 4.3-3.8 7.8-8.5 7.8-1.2 0-2.4-.2-3.4-.7L3.5 20l1.4-4.2a7.3 7.3 0 0 1-1.4-4.2c0-4.3 3.8-7.8 8.5-7.8s8.5 3.5 8.5 7.8Z" strokeLinejoin="round" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={className ?? "h-6 w-6"}>
+      <path d="M20.656 17.008a9.993 9.993 0 1 0-3.59 3.615L22 22Z" strokeLinejoin="round" />
     </svg>
   );
 }
