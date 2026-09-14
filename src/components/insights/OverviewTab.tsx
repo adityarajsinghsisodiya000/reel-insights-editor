@@ -77,7 +77,7 @@ export function OverviewTab() {
     <div>
       <SectionTitle title={o.summaryTitle} onChange={(v) => update((d) => { d.overview.summaryTitle = v; })} />
 
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="mt-3 grid grid-cols-2 gap-2.5">
         {o.stats.map((s, i) => (
           <div key={s.id} className="rounded-2xl bg-ig-card px-4 py-3">
             <Editable value={s.label} onChange={(v) => update((d) => { d.overview.stats[i]!.label = v; })} label="Stat title">
