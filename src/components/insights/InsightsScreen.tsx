@@ -96,7 +96,7 @@ export function InsightsScreen() {
             const Icon = icons[i] ?? LikeIcon;
             return (
               <div key={s.id} className="flex flex-col items-center gap-2">
-                <Icon className="h-6 w-6 text-ig-text" />
+                <Icon className="h-5 w-5 text-ig-text" />
                 <Editable
                   value={s.value}
                   onChange={(v) => update((d) => { d.interactions[i]!.value = v; })}
