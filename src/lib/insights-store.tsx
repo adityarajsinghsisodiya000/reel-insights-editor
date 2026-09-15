@@ -55,14 +55,14 @@ function merge(stored: Partial<InsightsData>): InsightsData {
       result.overview.stats[i]!.value = defaults.overview.stats[i]!.value;
     }
   }
-  // Auto-calc Viewers (71.5% of Views) and Profile visits (2% of Viewers)
+  // Auto-calc Viewers (95% of Views) and Profile visits (2% of Viewers)
   const viewsStr = result.overview.stats.find((s) => s.id === "views")?.value ?? "0";
   const viewsNum = Number(String(viewsStr).replace(/[^\d.-]/g, ""));
   const viewersStat = result.overview.stats.find((s) => s.id === "viewers");
   const pvAction = result.engagement.actions.find((a) => a.id === "pv");
   if (Number.isFinite(viewsNum) && viewsNum > 0) {
     if (viewersStat) {
-      const viewersNum = Math.round(viewsNum * 0.715);
+          const viewersNum = Math.round(viewsNum * 0.95);
       viewersStat.value = formatWithCommas(String(viewersNum));
       if (pvAction) {
         pvAction.value = formatWithCommas(String(Math.round(viewersNum * 0.003)));
@@ -133,7 +133,7 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
       if (viewsStat && viewersStat) {
         const viewsNum = Number(viewsStat.value.replace(/[^\d.-]/g, ""));
         if (Number.isFinite(viewsNum) && viewsNum > 0) {
-          const viewersNum = Math.round(viewsNum * 0.715);
+      const viewersNum = Math.round(viewsNum * 0.95);
           viewersStat.value = formatWithCommas(String(viewersNum));
           if (profileAction) {
             profileAction.value = formatWithCommas(String(Math.round(viewersNum * 0.003)));
