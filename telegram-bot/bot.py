@@ -8,8 +8,8 @@ import base64
 import time
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
-from telegram import Update, BotCommand
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram import Update, BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
 from flask import Flask
 
 import firebase_admin
@@ -129,46 +129,117 @@ DURATION_MAP = {
     "lifetime": "Lifetime",
 }
 
+DURATION_EMOJI = {
+    "1h": "1",
+    "5h": "5",
+    "12h": "12",
+    "1d": "1",
+    "7d": "7",
+    "30d": "30",
+    "lifetime": "∞",
+}
+
+
+def safe_get_db():
+    db = get_db()
+    if not db:
+        db = retry_firebase()
+    return db
+
+
+def safe_firestore_op(fn, *args, **kwargs):
+    db = safe_get_db()
+    if not db:
+        return None, "db_error"
+    try:
+        return fn(db, *args, **kwargs), "ok"
+    except Exception as e:
+        print(f"Firestore error: {e}")
+        global _fb_initialized
+        _fb_initialized = False
+        db = retry_firebase()
+        if db:
+            try:
+                return fn(db, *args, **kwargs), "ok"
+            except Exception as e2:
+                print(f"Firestore retry error: {e2}")
+                return None, "error"
+        return None, "error"
+
+
+# ── Commands ──────────────────────────────────────────────
+
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
-        await update.message.reply_text("Access denied. Admin only.")
+        await update.message.reply_text(
+            "⛔ **Access Denied**\n\nThis is a private admin bot."
+        )
         return
 
-    help_text = (
-        "**Reel Insights Admin Bot**\n\n"
-        "**Commands:**\n"
-        "/generatekey `<duration>` - Generate a new key\n"
-        "  Duration: `1h`, `5h`, `12h`, `1d`, `7d`, `30d`, `lifetime`\n"
-        "  Example: `/generatekey 7d`\n\n"
-        "/deactivate `<key>` - Deactivate a key\n"
-        "/keyinfo `<key>` - Get key details\n"
-        "/listkeys - List all active keys\n"
-        "/stats - Show statistics\n"
-        "/setuser `<key>` `@username` - Assign key to user\n"
-        "/renew `<key>` `<duration>` - Renew/extend key\n"
-        "/fbstatus - Check Firebase connection\n\n"
-        "**Key Format:** `RI-XXXX-XXXX-XXXX`"
+    name = update.effective_user.first_name or "Admin"
+    text = (
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"  🎬 **Reel Insights Admin**\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"Welcome back, **{name}**!\n\n"
+        f"🔑 **Key Management**\n"
+        f"  /generatekey — Generate new key\n"
+        f"  /deactivate — Disable a key\n"
+        f"  /renew — Extend key duration\n\n"
+        f"📊 **Info & Stats**\n"
+        f"  /keyinfo — Key details\n"
+        f"  /listkeys — All active keys\n"
+        f"  /stats — Dashboard stats\n\n"
+        f"⚙️ **Utilities**\n"
+        f"  /setuser — Assign key to user\n"
+        f"  /fbstatus — Connection health\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━"
     )
-    await update.message.reply_text(help_text, parse_mode="Markdown")
+    await update.message.reply_text(text, parse_mode="Markdown")
 
 
 async def generate_key_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
-        await update.message.reply_text("Access denied.")
+        await update.message.reply_text("⛔ Access denied.")
         return
 
     args = clean_args(context.args)
     if not args:
-        await update.message.reply_text("Usage: /generatekey `<duration>`\nDuration: `1h`, `5h`, `12h`, `1d`, `7d`, `30d`, `lifetime`", parse_mode="Markdown")
+        keyboard = [
+            [
+                InlineKeyboardButton("1h", callback_data="gen_1h"),
+                InlineKeyboardButton("5h", callback_data="gen_5h"),
+                InlineKeyboardButton("12h", callback_data="gen_12h"),
+            ],
+            [
+                InlineKeyboardButton("1d", callback_data="gen_1d"),
+                InlineKeyboardButton("7d", callback_data="gen_7d"),
+                InlineKeyboardButton("30d", callback_data="gen_30d"),
+            ],
+            [InlineKeyboardButton("Lifetime", callback_data="gen_lifetime")],
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        await update.message.reply_text(
+            "🔑 **Generate Key**\n\nSelect duration:",
+            parse_mode="Markdown",
+            reply_markup=reply_markup,
+        )
         return
 
     duration = args[0].lower()
     if duration not in DURATION_MAP:
-        await update.message.reply_text(f"Invalid duration. Use: `1h`, `5h`, `12h`, `1d`, `7d`, `30d`, `lifetime`", parse_mode="Markdown")
+        await update.message.reply_text(
+            "❌ Invalid duration.\n\nUse: `1h`, `5h`, `12h`, `1d`, `7d`, `30d`, `lifetime`",
+            parse_mode="Markdown",
+        )
         return
 
     username = args[1] if len(args) > 1 else "Unassigned"
+    await _do_generate(update, context, duration, username)
+
+
+async def _do_generate(update, context, duration, username="Unassigned"):
     key = generate_key()
     expiry = get_expiry(duration)
 
@@ -185,78 +256,126 @@ async def generate_key_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "assignedTo": username,
     }
 
-    db = get_db()
-    if not db:
-        db = retry_firebase()
-    if db:
-        try:
-            db.collection("keys").add(key_data)
-        except Exception as e:
-            print(f"Firestore write error: {e}")
-            db = None
-            _fb_initialized = False
-            db = retry_firebase()
-            if db:
-                try:
-                    db.collection("keys").add(key_data)
-                except Exception as e2:
-                    print(f"Firestore retry write error: {e2}")
-                    await update.message.reply_text("Database error. Try again.")
-                    return
-            else:
-                await update.message.reply_text("Database error. Try again.")
-                return
+    _, status = safe_firestore_op(lambda db: db.collection("keys").add(key_data))
 
     expiry_str = expiry.strftime("%d %b %Y, %I:%M %p UTC") if expiry else "Never"
-    response = (
-        f"**Key Generated**\n\n"
-        f"`{key}`\n\n"
-        f"Duration: **{DURATION_MAP[duration]}**\n"
-        f"Expires: `{expiry_str}`\n"
-        f"Assigned to: {username}\n\n"
+    text = (
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"  ✅ **Key Generated**\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"🔑 `{key}`\n\n"
+        f"⏱ Duration: **{DURATION_MAP[duration]}**\n"
+        f"📅 Expires: `{expiry_str}`\n"
+        f"👤 Assigned: {username}\n\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
         f"Send this key to the user."
     )
-    await update.message.reply_text(response, parse_mode="Markdown")
+
+    if status != "ok":
+        text = (
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"  ⚠️ **Key Generated (No DB)**\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"🔑 `{key}`\n\n"
+            f"⏱ Duration: **{DURATION_MAP[duration]}**\n"
+            f"📅 Expires: `{expiry_str}`\n"
+            f"👤 Assigned: {username}\n\n"
+            f"⚠️ Could not save to database.\n"
+            f"Use /fbstatus to check."
+        )
+
+    await update.message.reply_text(text, parse_mode="Markdown")
+
+
+async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    if query.from_user.id != ADMIN_CHAT_ID:
+        return
+
+    data = query.data
+    if data.startswith("gen_"):
+        duration = data.replace("gen_", "")
+        if duration not in DURATION_MAP:
+            return
+        key = generate_key()
+        expiry = get_expiry(duration)
+
+        key_data = {
+            "key": key,
+            "status": "active",
+            "duration": duration,
+            "createdAt": datetime.utcnow(),
+            "expiresAt": expiry,
+            "activatedAt": None,
+            "deviceFingerprint": None,
+            "localStorageId": None,
+            "deviceInfo": None,
+            "assignedTo": "Unassigned",
+        }
+        safe_firestore_op(lambda db: db.collection("keys").add(key_data))
+
+        expiry_str = expiry.strftime("%d %b %Y, %I:%M %p UTC") if expiry else "Never"
+        text = (
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"  ✅ **Key Generated**\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"🔑 `{key}`\n\n"
+            f"⏱ Duration: **{DURATION_MAP[duration]}**\n"
+            f"📅 Expires: `{expiry_str}`\n"
+            f"👤 Assigned: Unassigned\n\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"Send this key to the user."
+        )
+        await query.edit_message_text(text, parse_mode="Markdown")
 
 
 async def deactivate_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
-        await update.message.reply_text("Access denied.")
+        await update.message.reply_text("⛔ Access denied.")
         return
 
     args = clean_args(context.args)
     if not args:
-        await update.message.reply_text("Usage: /deactivate `<key>`", parse_mode="Markdown")
+        await update.message.reply_text(
+            "Usage: /deactivate `<key>`", parse_mode="Markdown"
+        )
         return
 
     key = args[0].upper()
-    db = get_db()
-    if not db:
-        db = retry_firebase()
-    if db:
-        try:
-            keys_ref = db.collection("keys")
-            query = keys_ref.where("key", "==", key)
-            docs = query.stream()
-            found = False
-            for doc in docs:
-                doc.reference.update({"status": "deactivated"})
-                found = True
-            if found:
-                await update.message.reply_text(f"Key `{key}` deactivated.", parse_mode="Markdown")
-            else:
-                await update.message.reply_text(f"Key `{key}` not found.", parse_mode="Markdown")
-            return
-        except Exception as e:
-            print(f"Firestore error: {e}")
-            _fb_initialized = False
 
-    await update.message.reply_text("Database error. Try /fbstatus.")
+    def _deactivate(db):
+        keys_ref = db.collection("keys")
+        q = keys_ref.where("key", "==", key)
+        docs = q.stream()
+        found = False
+        for doc in docs:
+            doc.reference.update({"status": "deactivated"})
+            found = True
+        return found
+
+    result, status = safe_firestore_op(_deactivate)
+
+    if status == "ok" and result:
+        text = (
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"  🚫 **Key Deactivated**\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"🔑 `{key}`\n"
+            f"Status: **Deactivated**"
+        )
+    elif status == "ok" and not result:
+        text = f"❌ Key `{key}` not found."
+    else:
+        text = "⚠️ Database error. Use /fbstatus."
+
+    await update.message.reply_text(text, parse_mode="Markdown")
 
 
 async def key_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
-        await update.message.reply_text("Access denied.")
+        await update.message.reply_text("⛔ Access denied.")
         return
 
     args = clean_args(context.args)
@@ -265,263 +384,285 @@ async def key_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     key = args[0].upper()
-    db = get_db()
-    if not db:
-        db = retry_firebase()
-    if db:
-        try:
-            keys_ref = db.collection("keys")
-            query = keys_ref.where("key", "==", key)
-            docs = query.stream()
-            for doc in docs:
-                data = doc.to_dict()
-                status = data.get("status", "unknown")
-                duration = data.get("duration", "unknown")
-                assigned = data.get("assignedTo", "Unassigned")
-                created = data.get("createdAt")
-                expires = data.get("expiresAt")
-                activated = data.get("activatedAt")
-                device = data.get("deviceInfo")
 
-                created_str = created.strftime("%d %b %Y %H:%M UTC") if created else "N/A"
-                expires_str = expires.strftime("%d %b %Y %H:%M UTC") if expires else "N/A"
-                activated_str = activated.strftime("%d %b %Y %H:%M UTC") if activated else "Not activated"
+    def _get_info(db):
+        q = db.collection("keys").where("key", "==", key)
+        for doc in q.stream():
+            return doc.to_dict()
+        return None
 
-                device_str = "No device info"
-                if device:
-                    device_str = (
-                        f"Platform: {device.get('platform', 'N/A')}\n"
-                        f"Screen: {device.get('screen', 'N/A')}\n"
-                        f"UA: {device.get('userAgent', 'N/A')[:80]}..."
-                    )
+    data, status = safe_firestore_op(_get_info)
 
-                response = (
-                    f"**Key Info: `{key}`**\n\n"
-                    f"Status: **{status}**\n"
-                    f"Duration: **{DURATION_MAP.get(duration, duration)}**\n"
-                    f"Assigned to: {assigned}\n"
-                    f"Created: `{created_str}`\n"
-                    f"Expires: `{expires_str}`\n"
-                    f"Activated: `{activated_str}`\n\n"
-                    f"**Device Info:**\n{device_str}"
-                )
-                await update.message.reply_text(response, parse_mode="Markdown")
-                return
-            await update.message.reply_text(f"Key `{key}` not found.", parse_mode="Markdown")
-            return
-        except Exception as e:
-            print(f"Firestore error: {e}")
-            _fb_initialized = False
+    if status == "ok" and data:
+        s = data.get("status", "unknown")
+        d = data.get("duration", "unknown")
+        who = data.get("assignedTo", "Unassigned")
+        created = data.get("createdAt")
+        expires = data.get("expiresAt")
+        activated = data.get("activatedAt")
+        device = data.get("deviceInfo")
 
-    await update.message.reply_text("Database error. Try /fbstatus.")
+        status_icon = {"active": "🟢", "deactivated": "🔴", "expired": "🟡"}.get(s, "⚪")
+
+        created_str = created.strftime("%d %b %Y %H:%M UTC") if created else "N/A"
+        expires_str = expires.strftime("%d %b %Y %H:%M UTC") if expires else "N/A"
+        activated_str = activated.strftime("%d %b %Y %H:%M UTC") if activated else "Not yet"
+
+        device_str = "No device info"
+        if device:
+            device_str = (
+                f"Platform: {device.get('platform', 'N/A')}\n"
+                f"Screen: {device.get('screen', 'N/A')}\n"
+                f"UA: {device.get('userAgent', 'N/A')[:60]}..."
+            )
+
+        text = (
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"  📋 **Key Details**\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"🔑 `{key}`\n\n"
+            f"Status: {status_icon} **{s}**\n"
+            f"Duration: ⏱ **{DURATION_MAP.get(d, d)}**\n"
+            f"Assigned: 👤 {who}\n\n"
+            f"📅 Created: `{created_str}`\n"
+            f"⏰ Expires: `{expires_str}`\n"
+            f"🔓 Activated: `{activated_str}`\n\n"
+            f"📱 **Device Info:**\n{device_str}\n\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━"
+        )
+    elif status == "ok":
+        text = f"❌ Key `{key}` not found."
+    else:
+        text = "⚠️ Database error. Use /fbstatus."
+
+    await update.message.reply_text(text, parse_mode="Markdown")
 
 
 async def list_keys(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
-        await update.message.reply_text("Access denied.")
+        await update.message.reply_text("⛔ Access denied.")
         return
 
-    db = get_db()
-    if not db:
-        db = retry_firebase()
-    if db:
-        try:
-            keys_ref = db.collection("keys")
-            query = keys_ref.where("status", "==", "active")
-            docs = list(query.stream())
+    def _list(db):
+        q = db.collection("keys").where("status", "==", "active")
+        return list(q.stream())
 
-            if not docs:
-                await update.message.reply_text("No active keys found.")
-                return
+    docs, status = safe_firestore_op(_list)
 
-            lines = ["**Active Keys:**\n"]
-            for i, doc in enumerate(docs, 1):
-                data = doc.to_dict()
-                key = data.get("key", "?")
-                duration = data.get("duration", "?")
-                assigned = data.get("assignedTo", "?")
-                expires = data.get("expiresAt")
-                expires_str = expires.strftime("%d %b") if expires else "N/A"
-                lines.append(f"{i}. `{key}` | {DURATION_MAP.get(duration, duration)} | {assigned} | exp: {expires_str}")
-
-            await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
+    if status == "ok":
+        if not docs:
+            await update.message.reply_text("📭 No active keys.")
             return
-        except Exception as e:
-            print(f"Firestore error: {e}")
-            _fb_initialized = False
 
-    await update.message.reply_text("Database error. Try /fbstatus.")
+        lines = [
+            f"━━━━━━━━━━━━━━━━━━━━━━",
+            f"  🔑 **Active Keys** ({len(docs)})",
+            f"━━━━━━━━━━━━━━━━━━━━━━\n",
+        ]
+        for i, doc in enumerate(docs, 1):
+            d = doc.to_dict()
+            k = d.get("key", "?")
+            dur = d.get("duration", "?")
+            who = d.get("assignedTo", "?")
+            exp = d.get("expiresAt")
+            exp_str = exp.strftime("%d %b") if exp else "∞"
+            lines.append(
+                f"**{i}.** `{k}`\n"
+                f"     ⏱ {DURATION_MAP.get(dur, dur)} | 👤 {who}\n"
+                f"     📅 {exp_str}"
+            )
+        lines.append(f"\n━━━━━━━━━━━━━━━━━━━━━━")
+        text = "\n".join(lines)
+    else:
+        text = "⚠️ Database error. Use /fbstatus."
+
+    await update.message.reply_text(text, parse_mode="Markdown")
 
 
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
-        await update.message.reply_text("Access denied.")
+        await update.message.reply_text("⛔ Access denied.")
         return
 
-    db = get_db()
-    if not db:
-        db = retry_firebase()
-    if db:
-        try:
-            keys_ref = db.collection("keys")
-            all_keys = list(keys_ref.stream())
-            active = sum(1 for d in all_keys if d.to_dict().get("status") == "active")
-            deactivated = sum(1 for d in all_keys if d.to_dict().get("status") == "deactivated")
-            expired = sum(1 for d in all_keys if d.to_dict().get("status") == "expired")
+    def _stats(db):
+        all_keys = list(db.collection("keys").stream())
+        all_logs = list(db.collection("logs").stream())
 
-            logs_ref = db.collection("logs")
-            all_logs = list(logs_ref.stream())
-            activations = sum(1 for d in all_logs if d.to_dict().get("action") == "activated")
+        active = sum(1 for d in all_keys if d.to_dict().get("status") == "active")
+        deactivated = sum(1 for d in all_keys if d.to_dict().get("status") == "deactivated")
+        expired = sum(1 for d in all_keys if d.to_dict().get("status") == "expired")
+        activations = sum(1 for d in all_logs if d.to_dict().get("action") == "activated")
 
-            response = (
-                f"**Statistics**\n\n"
-                f"Total Keys: **{len(all_keys)}**\n"
-                f"Active: **{active}**\n"
-                f"Deactivated: **{deactivated}**\n"
-                f"Expired: **{expired}**\n"
-                f"Total Activations: **{activations}**"
-            )
-            await update.message.reply_text(response, parse_mode="Markdown")
-            return
-        except Exception as e:
-            print(f"Firestore error: {e}")
-            _fb_initialized = False
+        return {
+            "total": len(all_keys),
+            "active": active,
+            "deactivated": deactivated,
+            "expired": expired,
+            "activations": activations,
+        }
 
-    await update.message.reply_text("Database error. Try /fbstatus.")
+    data, status = safe_firestore_op(_stats)
+
+    if status == "ok":
+        text = (
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"  📊 **Dashboard**\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"🔑 Total Keys: **{data['total']}**\n\n"
+            f"  🟢 Active:      **{data['active']}**\n"
+            f"  🔴 Deactivated: **{data['deactivated']}**\n"
+            f"  🟡 Expired:     **{data['expired']}**\n\n"
+            f"🔓 Activations: **{data['activations']}**\n\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━"
+        )
+    else:
+        text = "⚠️ Database error. Use /fbstatus."
+
+    await update.message.reply_text(text, parse_mode="Markdown")
 
 
 async def set_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
-        await update.message.reply_text("Access denied.")
+        await update.message.reply_text("⛔ Access denied.")
         return
 
     args = clean_args(context.args)
     if len(args) < 2:
-        await update.message.reply_text("Usage: /setuser `<key>` `@username`", parse_mode="Markdown")
+        await update.message.reply_text(
+            "Usage: /setuser `<key>` `@username`", parse_mode="Markdown"
+        )
         return
 
     key = args[0].upper()
     username = args[1]
 
-    db = get_db()
-    if not db:
-        db = retry_firebase()
-    if db:
-        try:
-            query = db.collection("keys").where("key", "==", key)
-            docs = query.stream()
-            for doc in docs:
-                doc.reference.update({"assignedTo": username})
-                await update.message.reply_text(f"Key `{key}` assigned to {username}.", parse_mode="Markdown")
-                return
-            await update.message.reply_text(f"Key `{key}` not found.", parse_mode="Markdown")
-            return
-        except Exception as e:
-            print(f"Firestore error: {e}")
-            _fb_initialized = False
+    def _set_user(db):
+        q = db.collection("keys").where("key", "==", key)
+        docs = q.stream()
+        for doc in docs:
+            doc.reference.update({"assignedTo": username})
+            return True
+        return False
 
-    await update.message.reply_text("Database error. Try /fbstatus.")
+    found, status = safe_firestore_op(_set_user)
+
+    if status == "ok" and found:
+        text = (
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"  👤 **User Assigned**\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"🔑 `{key}`\n"
+            f"👤 → {username}"
+        )
+    elif status == "ok":
+        text = f"❌ Key `{key}` not found."
+    else:
+        text = "⚠️ Database error. Use /fbstatus."
+
+    await update.message.reply_text(text, parse_mode="Markdown")
 
 
 async def renew_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
-        await update.message.reply_text("Access denied.")
+        await update.message.reply_text("⛔ Access denied.")
         return
 
     args = clean_args(context.args)
     if len(args) < 2:
-        await update.message.reply_text("Usage: /renew `<key>` `<duration>`", parse_mode="Markdown")
+        await update.message.reply_text(
+            "Usage: /renew `<key>` `<duration>`", parse_mode="Markdown"
+        )
         return
 
     key = args[0].upper()
     duration = args[1].lower()
 
     if duration not in DURATION_MAP:
-        await update.message.reply_text(f"Invalid duration. Use: `1h`, `5h`, `12h`, `1d`, `7d`, `30d`, `lifetime`", parse_mode="Markdown")
+        await update.message.reply_text(
+            "❌ Invalid duration.\nUse: `1h`, `5h`, `12h`, `1d`, `7d`, `30d`, `lifetime`",
+            parse_mode="Markdown",
+        )
         return
 
     expiry = get_expiry(duration)
 
-    db = get_db()
-    if not db:
-        db = retry_firebase()
-    if db:
-        try:
-            query = db.collection("keys").where("key", "==", key)
-            docs = query.stream()
-            for doc in docs:
-                update_data = {"duration": duration, "status": "active"}
-                if expiry:
-                    update_data["expiresAt"] = expiry
-                doc.reference.update(update_data)
-                await update.message.reply_text(
-                    f"Key `{key}` renewed for **{DURATION_MAP[duration]}**.\n"
-                    f"Expires: `{expiry.strftime('%d %b %Y %H:%M UTC') if expiry else 'Never'}`",
-                    parse_mode="Markdown",
-                )
-                return
-            await update.message.reply_text(f"Key `{key}` not found.", parse_mode="Markdown")
-            return
-        except Exception as e:
-            print(f"Firestore error: {e}")
-            _fb_initialized = False
+    def _renew(db):
+        q = db.collection("keys").where("key", "==", key)
+        docs = q.stream()
+        for doc in docs:
+            update_data = {"duration": duration, "status": "active"}
+            if expiry:
+                update_data["expiresAt"] = expiry
+            doc.reference.update(update_data)
+            return True
+        return False
 
-    await update.message.reply_text("Database error. Try /fbstatus.")
+    found, status = safe_firestore_op(_renew)
+
+    if status == "ok" and found:
+        exp_str = expiry.strftime("%d %b %Y %H:%M UTC") if expiry else "Never"
+        text = (
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"  🔄 **Key Renewed**\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
+            f"🔑 `{key}`\n"
+            f"⏱ Duration: **{DURATION_MAP[duration]}**\n"
+            f"📅 Expires: `{exp_str}`"
+        )
+    elif status == "ok":
+        text = f"❌ Key `{key}` not found."
+    else:
+        text = "⚠️ Database error. Use /fbstatus."
+
+    await update.message.reply_text(text, parse_mode="Markdown")
 
 
 async def fb_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
-        await update.message.reply_text("Access denied.")
+        await update.message.reply_text("⛔ Access denied.")
         return
-
-    db = get_db()
-    if not db:
-        db = retry_firebase()
 
     cred_b64 = os.getenv("FIREBASE_CRED_BASE64")
     cred_path = os.getenv("FIREBASE_CRED_PATH")
 
-    status_lines = [
-        "**Firebase Status:**\n",
-        f"Apps initialized: **{bool(firebase_admin._apps)}**",
-        f"CRED_BASE64 env: **{'set' if cred_b64 else 'NOT set'}**",
-        f"CRED_PATH env: **{cred_path or 'NOT set'}**",
-        f"Firestore client: **{'connected' if db else 'disconnected'}**",
+    db = safe_get_db()
+
+    lines = [
+        f"━━━━━━━━━━━━━━━━━━━━━━",
+        f"  🔧 **Firebase Status**",
+        f"━━━━━━━━━━━━━━━━━━━━━━\n",
+        f"📦 Apps: **{'OK' if firebase_admin._apps else 'FAIL'}**",
+        f"🔐 CRED_BASE64: **{'set' if cred_b64 else 'missing'}**",
+        f"📄 CRED_PATH: **{cred_path or 'missing'}**",
+        f"🗄 Client: **{'connected' if db else 'disconnected'}**\n",
     ]
 
     if db:
         try:
-            test = db.collection("keys").limit(1).stream()
-            list(test)
-            status_lines.append("Firestore read/write: **OK**")
+            list(db.collection("keys").limit(1).stream())
+            lines.append("✅ Read/Write: **OK**")
         except Exception as e:
-            status_lines.append(f"Firestore test failed: `{str(e)[:80]}`")
-            status_lines.append("\nAttempting reconnect...")
+            lines.append(f"❌ Read/Write: **FAIL**\n`{str(e)[:60]}`")
             global _fb_initialized
             _fb_initialized = False
-            _db_new = None
             db = init_firebase()
-            if db:
-                status_lines.append("Reconnect: **SUCCESS**")
-            else:
-                status_lines.append("Reconnect: **FAILED**")
+            lines.append(f"🔄 Reconnect: **{'OK' if db else 'FAIL'}**")
     else:
-        status_lines.append("\nAttempting reconnect...")
+        lines.append("🔄 Reconnecting...")
         db = retry_firebase()
-        if db:
-            status_lines.append("Reconnect: **SUCCESS**")
-        else:
-            status_lines.append("Reconnect: **FAILED**")
-            status_lines.append("\nCheck Render env vars:\n`FIREBASE_CRED_BASE64` must be set.")
+        lines.append(f"🔄 Reconnect: **{'OK' if db else 'FAIL'}**")
+        if not db:
+            lines.append("\n⚠️ Check `FIREBASE_CRED_BASE64` in Render env vars.")
 
-    await update.message.reply_text("\n".join(status_lines), parse_mode="Markdown")
+    lines.append(f"\n━━━━━━━━━━━━━━━━━━━━━━")
+    await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id == ADMIN_CHAT_ID:
-        await update.message.reply_text("Unknown command. Use /start for help.")
+        await update.message.reply_text("🤔 Unknown command.\nUse /start for help.")
     else:
-        await update.message.reply_text("This is a private admin bot.")
+        await update.message.reply_text("⛔ This is a private admin bot.")
 
 
 async def post_init(application: Application):
@@ -553,6 +694,7 @@ def run_bot():
     app.add_handler(CommandHandler("setuser", set_user))
     app.add_handler(CommandHandler("renew", renew_key))
     app.add_handler(CommandHandler("fbstatus", fb_status))
+    app.add_handler(CallbackQueryHandler(callback_handler, pattern="^gen_"))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
     print("Bot is running!")
