@@ -61,7 +61,7 @@ function merge(stored: Partial<InsightsData>): InsightsData {
       const viewersNum = Math.round(viewsNum * 0.715);
       viewersStat.value = formatWithCommas(String(viewersNum));
       if (pvAction) {
-        pvAction.value = formatWithCommas(String(Math.round(viewersNum * 0.02)));
+        pvAction.value = formatWithCommas(String(Math.round(viewersNum * 0.003)));
       }
     }
   }
@@ -126,7 +126,7 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
           const viewersNum = Math.round(viewsNum * 0.715);
           viewersStat.value = formatWithCommas(String(viewersNum));
           if (profileAction) {
-            profileAction.value = formatWithCommas(String(Math.round(viewersNum * 0.02)));
+            profileAction.value = formatWithCommas(String(Math.round(viewersNum * 0.003)));
           }
         }
       }
