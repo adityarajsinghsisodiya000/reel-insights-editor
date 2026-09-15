@@ -3,7 +3,8 @@ import random
 import string
 import asyncio
 import threading
-import signal
+import json
+import base64
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from telegram import Update, BotCommand
@@ -19,12 +20,23 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID", "0"))
 
 if not firebase_admin._apps:
-    cred_path = os.getenv("FIREBASE_CRED_PATH", "serviceAccountKey.json")
-    if os.path.exists(cred_path):
-        cred = credentials.Certificate(cred_path)
-        firebase_admin.initialize_app(cred)
+    cred_b64 = os.getenv("FIREBASE_CRED_BASE64")
+    if cred_b64:
+        try:
+            cred_json = json.loads(base64.b64decode(cred_b64))
+            cred = credentials.Certificate(cred_json)
+            firebase_admin.initialize_app(cred)
+            print("Firebase initialized from base64 env var")
+        except Exception as e:
+            print(f"Firebase base64 init failed: {e}")
     else:
-        print(f"WARNING: {cred_path} not found. Running without Firebase.")
+        cred_path = os.getenv("FIREBASE_CRED_PATH", "serviceAccountKey.json")
+        if os.path.exists(cred_path):
+            cred = credentials.Certificate(cred_path)
+            firebase_admin.initialize_app(cred)
+            print(f"Firebase initialized with {cred_path}")
+        else:
+            print(f"WARNING: No Firebase credentials found. Running without Firebase.")
 
 db = firestore.client() if firebase_admin._apps else None
 
@@ -358,6 +370,9 @@ async def post_init(application: Application):
 
 
 def run_bot():
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
     app = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
 
     app.add_handler(CommandHandler("start", start))
@@ -370,7 +385,7 @@ def run_bot():
     app.add_handler(CommandHandler("renew", renew_key))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    print("Bot is running! Press Ctrl+C to stop.")
+    print("Bot is running!")
     app.run_polling(drop_pending_updates=True)
 
 
