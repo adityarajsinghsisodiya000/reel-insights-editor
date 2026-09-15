@@ -80,7 +80,7 @@ export function InsightsScreen() {
         </Editable>
         <div className="flex shrink-0 items-center gap-2">
           <TrendingUp className="h-6 w-6 text-ig-text" />
-          <MoreVertical className="h-5 w-5 text-ig-dim pointer-events-none" />
+          <MoreVertical className="h-5 w-5 text-ig-text pointer-events-none" />
         </div>
       </header>
 
