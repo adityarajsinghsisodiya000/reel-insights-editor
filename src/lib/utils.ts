@@ -80,3 +80,53 @@ export function redistributeAndSort(
   const redistributed = redistributePercentages(items, changedIdx, newVal);
   return [...redistributed].sort((a, b) => b.percentage - a.percentage);
 }
+
+/**
+ * Seeded pseudo-random number generator (mulberry32)
+ */
+function seededRandom(seed: number) {
+  let s = seed | 0;
+  return () => {
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+/**
+ * Generate realistic Instagram-like graph points based on total views.
+ * Each views value produces a unique shape with growth trend, dips, and peaks.
+ */
+export function generateGraphPoints(viewsTotal: number, count = 20): { time: number; value: number }[] {
+  const rng = seededRandom(Math.round(viewsTotal));
+  const points: { time: number; value: number }[] = [];
+
+  // Generate random weights with upward bias
+  const weights: number[] = [];
+  let totalWeight = 0;
+  for (let i = 0; i < count; i++) {
+    // Upward trend: later points tend to be higher
+    const trend = 0.3 + (i / (count - 1)) * 0.7;
+    // Random variation
+    const noise = 0.3 + rng() * 1.4;
+    // Occasional dips (20% chance)
+    const dip = rng() < 0.2 ? 0.3 + rng() * 0.4 : 1;
+    const w = trend * noise * dip;
+    weights.push(w);
+    totalWeight += w;
+  }
+
+  // Normalize weights so sum = viewsTotal
+  for (let i = 0; i < count; i++) {
+    points.push({
+      time: i,
+      value: Math.round((weights[i]! / totalWeight) * viewsTotal),
+    });
+  }
+
+  // First point is always 0 (reel just posted)
+  points[0] = { time: 0, value: 0 };
+
+  return points;
+}

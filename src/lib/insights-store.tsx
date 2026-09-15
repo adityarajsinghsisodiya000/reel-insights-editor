@@ -10,7 +10,7 @@ import {
   type Context,
 } from "react";
 import { cloneDefaults, type InsightsData } from "./insights-data";
-import { formatWithCommas } from "./utils";
+import { formatWithCommas, generateGraphPoints } from "./utils";
 
 const STORAGE_KEY = "insights-editor-v5";
 
@@ -64,6 +64,9 @@ function merge(stored: Partial<InsightsData>): InsightsData {
         pvAction.value = formatWithCommas(String(Math.round(viewersNum * 0.003)));
       }
     }
+    // Regenerate graph points based on Views
+    const pts = result.overview.viewsGraph.points;
+    result.overview.viewsGraph.points = generateGraphPoints(viewsNum, pts.length);
   }
   return result;
 }
@@ -130,17 +133,13 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
           }
         }
       }
-      // Format Views with commas and scale chart data points
+      // Format Views with commas and regenerate graph points based on Views
       if (viewsStat) {
         viewsStat.value = formatWithCommas(viewsStat.value);
         const viewsNum = Number(viewsStat.value.replace(/[^\d.-]/g, ""));
         if (Number.isFinite(viewsNum) && viewsNum > 0) {
           const pts = next.overview.viewsGraph.points;
-          const maxPoint = Math.max(...pts.map((p) => p.value), 1);
-          const scale = viewsNum / maxPoint;
-          for (const pt of pts) {
-            pt.value = Math.round(pt.value * scale);
-          }
+          next.overview.viewsGraph.points = generateGraphPoints(viewsNum, pts.length);
         }
       }
       return next;

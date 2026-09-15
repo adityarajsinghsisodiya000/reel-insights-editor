@@ -1,6 +1,7 @@
 import { ChevronRight, TrendingUp } from "lucide-react";
 import { useInsights } from "@/lib/insights-store";
 import { redistributePercentages } from "@/lib/utils";
+import { generateGraphPoints } from "@/lib/utils";
 import { Editable } from "./Editable";
 import { SimpleChart } from "./EditableChart";
 import { ReelPreview } from "./ReelPreview";
@@ -73,7 +74,8 @@ export function OverviewTab() {
   const { yMax, yTicks } = calcYAxis(o.stats.find((s) => s.id === "views")?.value ?? "0");
 
   const viewsNum = Number(o.stats.find((s) => s.id === "views")?.value.replace(/[^\d.-]/g, "") ?? "0");
-  const compare = points.map((v) => Math.round(v * 0.7));
+  const comparePoints = generateGraphPoints(Math.round(viewsNum * 0.7), points.length);
+  const compare = comparePoints.map((p) => p.value);
 
   return (
     <div>
