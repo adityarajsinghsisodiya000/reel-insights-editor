@@ -12,7 +12,7 @@ import {
 import { cloneDefaults, type InsightsData } from "./insights-data";
 import { formatWithCommas } from "./utils";
 
-const STORAGE_KEY = "insights-editor-v3";
+const STORAGE_KEY = "insights-editor-v4";
 
 type Ctx = {
   data: InsightsData;
@@ -61,6 +61,7 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     try {
+      localStorage.removeItem("insights-editor-v3");
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setData(merge(JSON.parse(raw) as Partial<InsightsData>));
     } catch {
