@@ -56,7 +56,12 @@ export function InsightsScreen() {
       <header className="sticky top-0 z-20 flex items-center gap-4 bg-ig-bg px-4 py-3">
         <ArrowLeft className="h-6 w-6 shrink-0 text-ig-text" />
         <Editable value={data.headerTitle} onChange={(v) => update((d) => { d.headerTitle = v; })} label="Screen title">
-          <h1 className="flex-1 text-[19px] font-bold text-ig-text">{data.headerTitle}</h1>
+          <h1
+            onClick={() => setEditMode(!editMode)}
+            className="flex-1 text-[19px] font-bold text-ig-text cursor-pointer"
+          >
+            {data.headerTitle}
+          </h1>
         </Editable>
         <div className="flex shrink-0 items-center gap-2">
           <TrendingUp className="h-6 w-6 text-ig-text" />
