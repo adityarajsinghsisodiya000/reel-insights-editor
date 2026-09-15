@@ -12,7 +12,7 @@ import {
 import { cloneDefaults, type InsightsData } from "./insights-data";
 import { formatWithCommas } from "./utils";
 
-const STORAGE_KEY = "insights-editor-v4";
+const STORAGE_KEY = "insights-editor-v5";
 
 type Ctx = {
   data: InsightsData;
@@ -101,11 +101,16 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
       const followsStat = next.overview.stats.find((s) => s.id === "follows");
       const followsAction = next.engagement.actions.find((a) => a.id === "fl");
       if (followsStat && followsAction) followsAction.value = followsStat.value;
-      const pvStat = next.overview.stats.find((s) => s.id === "pv");
-      const profileAction = next.engagement.actions.find((a) => a.id === "pv");
-      if (pvStat && profileAction) profileAction.value = pvStat.value;
-      // Format Views with commas and scale chart data points
+      // Auto-calculate Profile visits as 5% of Views
       const viewsStat = next.overview.stats.find((s) => s.id === "views");
+      const profileAction = next.engagement.actions.find((a) => a.id === "pv");
+      if (viewsStat && profileAction) {
+        const viewsNum = Number(viewsStat.value.replace(/[^\d.-]/g, ""));
+        if (Number.isFinite(viewsNum) && viewsNum > 0) {
+          profileAction.value = formatWithCommas(String(Math.round(viewsNum * 0.05)));
+        }
+      }
+      // Format Views with commas and scale chart data points
       if (viewsStat) {
         viewsStat.value = formatWithCommas(viewsStat.value);
         const viewsNum = Number(viewsStat.value.replace(/[^\d.-]/g, ""));
