@@ -21,6 +21,10 @@ type Ctx = {
   importData: (d: InsightsData) => void;
   editMode: boolean;
   setEditMode: (v: boolean) => void;
+  keyActive: boolean;
+  setKeyActive: (v: boolean) => void;
+  showKeyPrompt: boolean;
+  setShowKeyPrompt: (v: boolean) => void;
 };
 
 // Keep a single context instance even if this module is evaluated twice
@@ -74,6 +78,8 @@ function merge(stored: Partial<InsightsData>): InsightsData {
 export function InsightsProvider({ children }: { children: ReactNode }) {
   const [data, setData] = useState<InsightsData>(() => cloneDefaults());
   const [editMode, setEditMode] = useState(false);
+  const [keyActive, setKeyActive] = useState(false);
+  const [showKeyPrompt, setShowKeyPrompt] = useState(false);
   const hydrated = useRef(false);
 
   useEffect(() => {
@@ -82,6 +88,11 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem("insights-editor-v4");
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setData(merge(JSON.parse(raw) as Partial<InsightsData>));
+
+      const savedKey = localStorage.getItem("ri-active-key");
+      if (savedKey) {
+        setKeyActive(true);
+      }
     } catch {
       /* ignore */
     }
@@ -153,8 +164,8 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo(
-    () => ({ data, update, reset, importData, editMode, setEditMode }),
-    [data, update, reset, importData, editMode],
+    () => ({ data, update, reset, importData, editMode, setEditMode, keyActive, setKeyActive, showKeyPrompt, setShowKeyPrompt }),
+    [data, update, reset, importData, editMode, keyActive, showKeyPrompt],
   );
 
   return <InsightsContext.Provider value={value}>{children}</InsightsContext.Provider>;

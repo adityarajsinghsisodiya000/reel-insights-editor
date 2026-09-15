@@ -8,11 +8,12 @@ import { OverviewTab } from "./OverviewTab";
 import { EngagementTab } from "./EngagementTab";
 import { AudienceTab } from "./AudienceTab";
 import { SettingsMenu } from "./SettingsMenu";
+import { KeyPrompt } from "../KeyPrompt";
 
 const icons = [LikeIcon, CommentIcon, RepostIcon, ShareIcon, SaveIcon];
 
 export function InsightsScreen() {
-  const { data, update, editMode, setEditMode } = useInsights();
+  const { data, update, editMode, setEditMode, keyActive, setKeyActive, showKeyPrompt, setShowKeyPrompt } = useInsights();
   const [tab, setTab] = useState<"overview" | "engagement" | "audience">("overview");
   const [menu, setMenu] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -45,6 +46,11 @@ export function InsightsScreen() {
     if (held.current) return;
     const now = Date.now();
     if (now - lastClick.current < 300) {
+      if (!keyActive) {
+        setShowKeyPrompt(true);
+        lastClick.current = 0;
+        return;
+      }
       setEditMode(!editMode);
       lastClick.current = 0;
     } else {
@@ -152,6 +158,17 @@ export function InsightsScreen() {
       </div>
 
       {menu && <SettingsMenu onClose={() => setMenu(false)} />}
+
+      {showKeyPrompt && (
+        <KeyPrompt
+          onKeyValid={() => {
+            setKeyActive(true);
+            setShowKeyPrompt(false);
+            setEditMode(true);
+          }}
+          onClose={() => setShowKeyPrompt(false)}
+        />
+      )}
     </div>
   );
 }
