@@ -174,7 +174,7 @@ export const defaultData: InsightsData = {
     actionsTitle: "Actions after viewing",
     actions: [
       { id: "fl", label: "Follows", value: "0" },
-      { id: "pv", label: "Profile visits", value: "4.5%" },
+      { id: "pv", label: "Profile visits", value: "69" },
     ],
     interactionsTitle: "Interactions",
     interactionRows: [

@@ -51,6 +51,13 @@ function merge(stored: Partial<InsightsData>): InsightsData {
       result.overview.stats[i]!.value = defaults.overview.stats[i]!.value;
     }
   }
+  // Auto-calc Profile visits = Views × 2%
+  const viewsStr = result.overview.stats.find((s) => s.id === "views")?.value ?? "0";
+  const viewsNum = Number(String(viewsStr).replace(/[^\d.-]/g, ""));
+  const pvAction = result.engagement.actions.find((a) => a.id === "pv");
+  if (pvAction && Number.isFinite(viewsNum) && viewsNum > 0) {
+    pvAction.value = formatWithCommas(String(Math.round(viewsNum * 0.02)));
+  }
   return result;
 }
 
@@ -62,6 +69,7 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       localStorage.removeItem("insights-editor-v3");
+      localStorage.removeItem("insights-editor-v4");
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setData(merge(JSON.parse(raw) as Partial<InsightsData>));
     } catch {
