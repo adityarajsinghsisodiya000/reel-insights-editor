@@ -10,7 +10,7 @@ import {
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
-import { db } from "./firebase-config";
+import { getDb } from "./firebase-config";
 import { getOrCreateDeviceId, generateDeviceFingerprint } from "./device-fingerprint";
 
 const KEYS_COLLECTION = "keys";
@@ -45,7 +45,7 @@ export async function validateAndActivateKey(inputKey: Promise<string>): Promise
     const key = await inputKey;
     const normalizedKey = key.trim().toUpperCase();
 
-    const q = query(collection(db, KEYS_COLLECTION), where("key", "==", normalizedKey));
+    const q = query(collection(getDb(), KEYS_COLLECTION), where("key", "==", normalizedKey));
     const snapshot = await getDocs(q);
 
     if (snapshot.empty) {
@@ -62,7 +62,7 @@ export async function validateAndActivateKey(inputKey: Promise<string>): Promise
 
     if (keyData.status === "expired" || (keyData.expiresAt && keyData.expiresAt.toDate() < new Date())) {
       if (keyData.status !== "expired") {
-        await updateDoc(doc(db, KEYS_COLLECTION, keyDoc.id), { status: "expired" });
+        await updateDoc(doc(getDb(), KEYS_COLLECTION, keyDoc.id), { status: "expired" });
       }
       await logAction(normalizedKey, "rejected_expired");
       return { valid: false, error: "Key has expired. Contact @Diablothedemon on Telegram for renewal" };
@@ -72,7 +72,7 @@ export async function validateAndActivateKey(inputKey: Promise<string>): Promise
     const fingerprint = await generateDeviceFingerprint();
 
     if (!keyData.deviceFingerprint) {
-      await updateDoc(doc(db, KEYS_COLLECTION, keyDoc.id), {
+      await updateDoc(doc(getDb(), KEYS_COLLECTION, keyDoc.id), {
         deviceFingerprint: fingerprint,
         localStorageId: deviceId,
         activatedAt: serverTimestamp(),
@@ -104,7 +104,7 @@ export async function validateAndActivateKey(inputKey: Promise<string>): Promise
 
 async function logAction(key: string, action: string) {
   try {
-    await addDoc(collection(db, LOGS_COLLECTION), {
+    await addDoc(collection(getDb(), LOGS_COLLECTION), {
       key,
       action,
       timestamp: serverTimestamp(),
