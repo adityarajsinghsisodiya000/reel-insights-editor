@@ -122,19 +122,10 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
         );
         if (engagementRow) engagementRow.value = row.value;
       }
-      // Sync overview.stats ↔ engagement.actions (Follows, Profile visits)
+      // Sync overview.stats ↔ engagement.actions (Follows)
       const followsStat = next.overview.stats.find((s) => s.id === "follows");
       const followsAction = next.engagement.actions.find((a) => a.id === "fl");
       if (followsStat && followsAction) followsAction.value = followsStat.value;
-      // Auto-calculate Profile visits from Viewers (if Viewers changed)
-      const viewersStat = next.overview.stats.find((s) => s.id === "viewers");
-      const profileAction = next.engagement.actions.find((a) => a.id === "pv");
-      if (viewersStat && profileAction) {
-        const viewersNum = Number(viewersStat.value.replace(/[^\d.-]/g, ""));
-        if (Number.isFinite(viewersNum) && viewersNum > 0) {
-          profileAction.value = formatWithCommas(String(Math.round(viewersNum * 0.003)));
-        }
-      }
       // Format Views with commas and regenerate graph points based on Views
       if (viewsStat) {
         viewsStat.value = formatWithCommas(viewsStat.value);
