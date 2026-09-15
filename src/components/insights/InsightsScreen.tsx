@@ -89,6 +89,10 @@ export function InsightsScreen() {
         </div>
       </header>
 
+      <div className="text-center text-[11px] font-semibold tracking-wider" style={{ color: "#8B0000" }}>
+        Created By <span style={{ color: "#DC143C" }}>Diablo The Demon</span>
+      </div>
+
       {editMode && (
         <div className="sticky top-[52px] z-10 flex items-center justify-between gap-3 bg-accent px-4 py-2 text-accent-foreground">
           <span className="flex items-center gap-2 text-[13px] font-medium">
