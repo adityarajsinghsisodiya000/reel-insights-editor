@@ -1,7 +1,6 @@
 import { ChevronRight, TrendingUp } from "lucide-react";
 import { useInsights } from "@/lib/insights-store";
-import { redistributePercentages } from "@/lib/utils";
-import { generateGraphPoints } from "@/lib/utils";
+import { redistributePercentages, generateGraphPoints } from "@/lib/utils";
 import { Editable } from "./Editable";
 import { SimpleChart } from "./EditableChart";
 import { ReelPreview } from "./ReelPreview";

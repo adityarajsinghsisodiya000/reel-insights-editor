@@ -3,29 +3,6 @@ import { BookmarkIcon, CommentIcon, HeartIcon, RepostIcon, ShareIcon } from "./i
 import type { ImpactRow as ImpactRowType } from "@/lib/insights-data";
 import { Editable } from "./Editable";
 
-export function LabelValueRow({
-  label,
-  value,
-  onLabel,
-  onValue,
-}: {
-  label: string;
-  value: string;
-  onLabel: (v: string) => void;
-  onValue: (v: string) => void;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-3 py-2.5">
-      <Editable value={label} onChange={onLabel} label="Label">
-        <span className="text-[16px] text-ig-text">{label}</span>
-      </Editable>
-      <Editable value={value} onChange={onValue} kind="number" label="Value">
-        <span className="text-[16px] text-ig-text">{value}</span>
-      </Editable>
-    </div>
-  );
-}
-
 const impactIcons = {
   skip: TimerReset,
   share: ShareIcon,
