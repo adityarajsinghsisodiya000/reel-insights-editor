@@ -73,9 +73,7 @@ export function OverviewTab() {
   const { yMax, yTicks } = calcYAxis(o.stats.find((s) => s.id === "views")?.value ?? "0");
 
   const viewsNum = Number(o.stats.find((s) => s.id === "views")?.value.replace(/[^\d.-]/g, "") ?? "0");
-  const compareBase = [0, 140, 650, 800, 750, 1050, 1350, 1250, 1450, 1800, 2500, 1700, 2600, 2400, 2350, 2500, 2550, 2700, 2650, 2400];
-  const compareMax = Math.max(...compareBase);
-  const compare = compareBase.map((v) => Math.round((v / compareMax) * viewsNum * 0.75));
+  const compare = points.map((v) => Math.round(v * 0.7));
 
   return (
     <div>
