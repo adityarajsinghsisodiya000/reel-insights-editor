@@ -107,7 +107,7 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
       if (viewsStat && profileAction) {
         const viewsNum = Number(viewsStat.value.replace(/[^\d.-]/g, ""));
         if (Number.isFinite(viewsNum) && viewsNum > 0) {
-          profileAction.value = formatWithCommas(String(Math.round(viewsNum * 0.05)));
+          profileAction.value = formatWithCommas(String(Math.round(viewsNum * 0.02)));
         }
       }
       // Format Views with commas and scale chart data points
