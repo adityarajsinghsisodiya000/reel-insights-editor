@@ -100,19 +100,14 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
       const followsStat = next.overview.stats.find((s) => s.id === "follows");
       const followsAction = next.engagement.actions.find((a) => a.id === "fl");
       if (followsStat && followsAction) followsAction.value = followsStat.value;
-      const viewersStat = next.overview.stats.find((s) => s.id === "viewers");
+      const pvStat = next.overview.stats.find((s) => s.id === "pv");
       const profileAction = next.engagement.actions.find((a) => a.id === "pv");
-      if (viewersStat && profileAction) profileAction.value = viewersStat.value;
-      // Auto-calculate Viewers (10% less than Views) and format Views with commas
+      if (pvStat && profileAction) profileAction.value = pvStat.value;
+      // Format Views with commas and scale chart data points
       const viewsStat = next.overview.stats.find((s) => s.id === "views");
       if (viewsStat) {
         viewsStat.value = formatWithCommas(viewsStat.value);
         const viewsNum = Number(viewsStat.value.replace(/[^\d.-]/g, ""));
-        if (Number.isFinite(viewsNum) && viewsNum > 0 && viewersStat) {
-          const viewersNum = Math.round(viewsNum * 0.90);
-          viewersStat.value = formatWithCommas(String(viewersNum));
-        }
-        // Scale chart data points proportionally to Views
         if (Number.isFinite(viewsNum) && viewsNum > 0) {
           const pts = next.overview.viewsGraph.points;
           const maxPoint = Math.max(...pts.map((p) => p.value), 1);
