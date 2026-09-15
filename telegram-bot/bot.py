@@ -3,6 +3,7 @@ import random
 import string
 import asyncio
 import threading
+import signal
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from telegram import Update, BotCommand
@@ -356,6 +357,23 @@ async def post_init(application: Application):
     ])
 
 
+def run_bot():
+    app = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
+
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("generatekey", generate_key_cmd))
+    app.add_handler(CommandHandler("deactivate", deactivate_key))
+    app.add_handler(CommandHandler("keyinfo", key_info))
+    app.add_handler(CommandHandler("listkeys", list_keys))
+    app.add_handler(CommandHandler("stats", stats))
+    app.add_handler(CommandHandler("setuser", set_user))
+    app.add_handler(CommandHandler("renew", renew_key))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    print("Bot is running! Press Ctrl+C to stop.")
+    app.run_polling(drop_pending_updates=True)
+
+
 def main():
     print("Starting Reel Insights Admin Bot...")
 
@@ -377,20 +395,7 @@ def main():
     flask_thread.start()
     print(f"Health server started on port {os.getenv('PORT', 8080)}")
 
-    app = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
-
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("generatekey", generate_key_cmd))
-    app.add_handler(CommandHandler("deactivate", deactivate_key))
-    app.add_handler(CommandHandler("keyinfo", key_info))
-    app.add_handler(CommandHandler("listkeys", list_keys))
-    app.add_handler(CommandHandler("stats", stats))
-    app.add_handler(CommandHandler("setuser", set_user))
-    app.add_handler(CommandHandler("renew", renew_key))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
-    print("Bot is running! Press Ctrl+C to stop.")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+    run_bot()
 
 
 if __name__ == "__main__":
