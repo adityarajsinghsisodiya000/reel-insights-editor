@@ -127,6 +127,7 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
       const followsAction = next.engagement.actions.find((a) => a.id === "fl");
       if (followsStat && followsAction) followsAction.value = followsStat.value;
       // Format Views with commas and regenerate graph points based on Views
+      const viewsStat = next.overview.stats.find((s) => s.id === "views");
       if (viewsStat) {
         viewsStat.value = formatWithCommas(viewsStat.value);
         const viewsNum = Number(viewsStat.value.replace(/[^\d.-]/g, ""));
