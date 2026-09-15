@@ -31,6 +31,10 @@ def generate_key():
     return f"RI-{'-'.join(parts)}"
 
 
+def clean_args(args):
+    return [a.strip("<>[]@") for a in args]
+
+
 def get_expiry(duration: str):
     now = datetime.utcnow()
     if duration == "1d":
@@ -77,7 +81,7 @@ async def generate_key_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Access denied.")
         return
 
-    args = context.args
+    args = clean_args(context.args)
     if not args:
         await update.message.reply_text("Usage: /generatekey `<duration>` `[@username]`", parse_mode="Markdown")
         return
@@ -124,7 +128,7 @@ async def deactivate_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Access denied.")
         return
 
-    args = context.args
+    args = clean_args(context.args)
     if not args:
         await update.message.reply_text("Usage: /deactivate `<key>`", parse_mode="Markdown")
         return
@@ -151,7 +155,7 @@ async def key_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Access denied.")
         return
 
-    args = context.args
+    args = clean_args(context.args)
     if not args:
         await update.message.reply_text("Usage: /keyinfo `<key>`", parse_mode="Markdown")
         return
@@ -263,7 +267,7 @@ async def set_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Access denied.")
         return
 
-    args = context.args
+    args = clean_args(context.args)
     if len(args) < 2:
         await update.message.reply_text("Usage: /setuser `<key>` `@username`", parse_mode="Markdown")
         return
@@ -288,7 +292,7 @@ async def renew_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Access denied.")
         return
 
-    args = context.args
+    args = clean_args(context.args)
     if len(args) < 2:
         await update.message.reply_text("Usage: /renew `<key>` `<duration>`", parse_mode="Markdown")
         return

@@ -86,13 +86,9 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
     try {
       localStorage.removeItem("insights-editor-v3");
       localStorage.removeItem("insights-editor-v4");
+      localStorage.removeItem("ri-active-key");
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) setData(merge(JSON.parse(raw) as Partial<InsightsData>));
-
-      const savedKey = localStorage.getItem("ri-active-key");
-      if (savedKey) {
-        setKeyActive(true);
-      }
     } catch {
       /* ignore */
     }

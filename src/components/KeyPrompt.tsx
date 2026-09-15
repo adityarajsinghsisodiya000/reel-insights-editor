@@ -25,7 +25,6 @@ export function KeyPrompt({ onKeyValid, onClose }: KeyPromptProps) {
       const result = await validateAndActivateKey(Promise.resolve(key.trim()));
 
       if (result.valid) {
-        localStorage.setItem("ri-active-key", key.trim().toUpperCase());
         onKeyValid();
       } else {
         setError(result.error || "Invalid key");

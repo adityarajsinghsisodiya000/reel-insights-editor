@@ -46,12 +46,11 @@ export function InsightsScreen() {
     if (held.current) return;
     const now = Date.now();
     if (now - lastClick.current < 300) {
-      if (!keyActive) {
+      if (editMode) {
+        setEditMode(false);
+      } else {
         setShowKeyPrompt(true);
-        lastClick.current = 0;
-        return;
       }
-      setEditMode(!editMode);
       lastClick.current = 0;
     } else {
       lastClick.current = now;
