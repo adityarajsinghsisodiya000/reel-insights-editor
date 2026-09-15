@@ -2,10 +2,12 @@ import os
 import random
 import string
 import asyncio
+import threading
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 from telegram import Update, BotCommand
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from flask import Flask
 
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -356,6 +358,25 @@ async def post_init(application: Application):
 
 def main():
     print("Starting Reel Insights Admin Bot...")
+
+    flask_app = Flask(__name__)
+
+    @flask_app.route("/")
+    def health():
+        return "Bot is running!"
+
+    @flask_app.route("/health")
+    def health_check():
+        return {"status": "ok"}
+
+    def run_flask():
+        port = int(os.getenv("PORT", 8080))
+        flask_app.run(host="0.0.0.0", port=port, debug=False, use_reloader=False)
+
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+    print(f"Health server started on port {os.getenv('PORT', 8080)}")
+
     app = Application.builder().token(BOT_TOKEN).post_init(post_init).build()
 
     app.add_handler(CommandHandler("start", start))
