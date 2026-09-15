@@ -47,7 +47,7 @@ function calcYAxis(viewsVal: string) {
   const mag = Math.pow(10, Math.floor(Math.log10(num)));
   const niceMax = Math.ceil(num / mag) * mag;
   const ticks = [niceMax, Math.round(niceMax / 2), 0].map(
-    (v) => `${Math.round(v / 1000)}K`,
+    (v) => v === 0 ? "0" : `${Math.round(v / 1000)}K`,
   );
   return { yMax: niceMax, yTicks: ticks };
 }
