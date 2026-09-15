@@ -126,18 +126,13 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
       const followsStat = next.overview.stats.find((s) => s.id === "follows");
       const followsAction = next.engagement.actions.find((a) => a.id === "fl");
       if (followsStat && followsAction) followsAction.value = followsStat.value;
-      // Auto-calculate Viewers (71% of Views) and Profile visits (2% of Viewers)
-      const viewsStat = next.overview.stats.find((s) => s.id === "views");
+      // Auto-calculate Profile visits from Viewers (if Viewers changed)
       const viewersStat = next.overview.stats.find((s) => s.id === "viewers");
       const profileAction = next.engagement.actions.find((a) => a.id === "pv");
-      if (viewsStat && viewersStat) {
-        const viewsNum = Number(viewsStat.value.replace(/[^\d.-]/g, ""));
-        if (Number.isFinite(viewsNum) && viewsNum > 0) {
-      const viewersNum = Math.round(viewsNum * 0.95);
-          viewersStat.value = formatWithCommas(String(viewersNum));
-          if (profileAction) {
-            profileAction.value = formatWithCommas(String(Math.round(viewersNum * 0.003)));
-          }
+      if (viewersStat && profileAction) {
+        const viewersNum = Number(viewersStat.value.replace(/[^\d.-]/g, ""));
+        if (Number.isFinite(viewersNum) && viewersNum > 0) {
+          profileAction.value = formatWithCommas(String(Math.round(viewersNum * 0.003)));
         }
       }
       // Format Views with commas and regenerate graph points based on Views
