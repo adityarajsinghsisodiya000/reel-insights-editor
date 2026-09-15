@@ -51,12 +51,19 @@ function merge(stored: Partial<InsightsData>): InsightsData {
       result.overview.stats[i]!.value = defaults.overview.stats[i]!.value;
     }
   }
-  // Auto-calc Profile visits = Views × 2%
+  // Auto-calc Viewers (71.5% of Views) and Profile visits (2% of Viewers)
   const viewsStr = result.overview.stats.find((s) => s.id === "views")?.value ?? "0";
   const viewsNum = Number(String(viewsStr).replace(/[^\d.-]/g, ""));
+  const viewersStat = result.overview.stats.find((s) => s.id === "viewers");
   const pvAction = result.engagement.actions.find((a) => a.id === "pv");
-  if (pvAction && Number.isFinite(viewsNum) && viewsNum > 0) {
-    pvAction.value = formatWithCommas(String(Math.round(viewsNum * 0.02)));
+  if (Number.isFinite(viewsNum) && viewsNum > 0) {
+    if (viewersStat) {
+      const viewersNum = Math.round(viewsNum * 0.715);
+      viewersStat.value = formatWithCommas(String(viewersNum));
+      if (pvAction) {
+        pvAction.value = formatWithCommas(String(Math.round(viewersNum * 0.02)));
+      }
+    }
   }
   return result;
 }
@@ -109,13 +116,17 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
       const followsStat = next.overview.stats.find((s) => s.id === "follows");
       const followsAction = next.engagement.actions.find((a) => a.id === "fl");
       if (followsStat && followsAction) followsAction.value = followsStat.value;
-      // Auto-calculate Profile visits as 5% of Views
-      const viewsStat = next.overview.stats.find((s) => s.id === "views");
+      // Auto-calculate Viewers (71% of Views) and Profile visits (2% of Viewers)
+      const viewersStat = next.overview.stats.find((s) => s.id === "viewers");
       const profileAction = next.engagement.actions.find((a) => a.id === "pv");
-      if (viewsStat && profileAction) {
+      if (viewsStat && viewersStat) {
         const viewsNum = Number(viewsStat.value.replace(/[^\d.-]/g, ""));
         if (Number.isFinite(viewsNum) && viewsNum > 0) {
-          profileAction.value = formatWithCommas(String(Math.round(viewsNum * 0.02)));
+          const viewersNum = Math.round(viewsNum * 0.715);
+          viewersStat.value = formatWithCommas(String(viewersNum));
+          if (profileAction) {
+            profileAction.value = formatWithCommas(String(Math.round(viewersNum * 0.02)));
+          }
         }
       }
       // Format Views with commas and scale chart data points

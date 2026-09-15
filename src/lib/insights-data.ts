@@ -85,6 +85,7 @@ export const defaultData: InsightsData = {
     summaryTitle: "Summary",
     stats: [
       { id: "views", label: "Views", value: "3,441" },
+      { id: "viewers", label: "Viewers", value: "2,461" },
       { id: "awt", label: "Average watch time", value: "4s" },
       { id: "follows", label: "Follows", value: "0" },
     ],
