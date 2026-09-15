@@ -20,7 +20,7 @@ export interface KeyData {
   id?: string;
   key: string;
   status: "active" | "deactivated" | "expired";
-  duration: "1d" | "7d" | "30d" | "lifetime";
+  duration: "1h" | "5h" | "12h" | "1d" | "7d" | "30d" | "lifetime";
   createdAt: Timestamp | null;
   expiresAt: Timestamp | null;
   activatedAt: Timestamp | null;
