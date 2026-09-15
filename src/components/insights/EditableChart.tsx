@@ -73,14 +73,31 @@ type SimpleChartProps = {
 
 function buildPath(points: number[], yMax: number, w = W, h = H) {
   if (points.length === 0) return "";
+  if (points.length === 1) return `M0,${h - (Math.max(0, Math.min(points[0], yMax)) / yMax) * h}`;
   const step = points.length > 1 ? w / (points.length - 1) : 0;
-  return points
-    .map((p, i) => {
-      const px = i * step;
-      const py = h - (Math.max(0, Math.min(p, yMax)) / yMax) * h;
-      return `${i === 0 ? "M" : "L"}${px.toFixed(2)},${py.toFixed(2)}`;
-    })
-    .join(" ");
+  const pts = points.map((p, i) => ({
+    x: i * step,
+    y: h - (Math.max(0, Math.min(p, yMax)) / yMax) * h,
+  }));
+
+  let d = `M${pts[0]!.x.toFixed(2)},${pts[0]!.y.toFixed(2)}`;
+
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)]!;
+    const p1 = pts[i]!;
+    const p2 = pts[i + 1]!;
+    const p3 = pts[Math.min(pts.length - 1, i + 2)]!;
+
+    const tension = 0.3;
+    const cp1x = p1.x + (p2.x - p0.x) * tension;
+    const cp1y = p1.y + (p2.y - p0.y) * tension;
+    const cp2x = p2.x - (p3.x - p1.x) * tension;
+    const cp2y = p2.y - (p3.y - p1.y) * tension;
+
+    d += ` C${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)}`;
+  }
+
+  return d;
 }
 
 function SimpleChart({
@@ -250,10 +267,11 @@ function SimpleChart({
           {xLabels.map((l, i) => {
             const dateKey = i === 0 ? "start" : "end";
             if (editMode && dateRange && onDateChange) {
+              const isTime = /^\d+:\d{2}$/.test(String(dateRange[dateKey]));
               return (
                 <input
                   key={`${l}-${i}`}
-                  type="date"
+                  type={isTime ? "text" : "date"}
                   value={dateRange[dateKey]}
                   onChange={(e) => {
                     onDateChange(

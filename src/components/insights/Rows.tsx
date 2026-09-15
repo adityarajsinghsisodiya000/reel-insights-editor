@@ -76,12 +76,15 @@ export function ProgressRow({
   percentage,
   onName,
   onPercentage,
+  color = "magenta",
 }: {
   name: string;
   percentage: number;
   onName: (v: string) => void;
   onPercentage: (v: number) => void;
+  color?: "magenta" | "purple";
 }) {
+  const barColor = color === "purple" ? "bg-purple-500" : "bg-ig-magenta";
   return (
     <div className="py-2">
       <Editable value={name} onChange={onName} label="Name">
@@ -90,7 +93,7 @@ export function ProgressRow({
       <div className="mt-2 flex items-center gap-4">
         <div className="h-[6px] flex-1 overflow-hidden rounded-full bg-ig-track">
           <div
-            className="h-full rounded-full bg-ig-magenta transition-all duration-200"
+            className={`h-full rounded-full ${barColor} transition-all duration-200`}
             style={{ width: `${Math.max(1, Math.min(100, percentage))}%` }}
           />
         </div>

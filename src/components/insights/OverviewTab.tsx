@@ -42,12 +42,11 @@ const compact = (n: number) => {
 function calcYAxis(viewsVal: string) {
   const num = Number(viewsVal.replace(/[^\d.-]/g, ""));
   if (!Number.isFinite(num) || num <= 0) {
-    return { yMax: 6000, yTicks: ["6K", "4K", "2K", "0"] };
+    return { yMax: 6000, yTicks: ["6K", "3K", "0"] };
   }
   const mag = Math.pow(10, Math.floor(Math.log10(num)));
   const niceMax = Math.ceil(num / mag) * mag;
-  const step = niceMax / 3;
-  const ticks = [niceMax, niceMax - step, niceMax - step * 2, 0].map(
+  const ticks = [niceMax, Math.round(niceMax / 2), 0].map(
     (v) => `${Math.round(v / 1000)}K`,
   );
   return { yMax: niceMax, yTicks: ticks };

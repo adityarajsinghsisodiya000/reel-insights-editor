@@ -39,6 +39,7 @@ export function AudienceTab() {
             key={r.id}
             name={r.name}
             percentage={r.percentage}
+            color={r.name === "Non-followers" ? "purple" : "magenta"}
             onName={(v) => update((d) => { d.audience.who[i]!.name = v; })}
             onPercentage={(v) => update((d) => { d.audience.who = redistributePercentages(d.audience.who, i, v); })}
           />
@@ -68,6 +69,7 @@ export function AudienceTab() {
           key={r.id}
           name={r.name}
           percentage={r.percentage}
+          color={activeCategory === "Gender" && r.name === "Women" ? "purple" : "magenta"}
           onName={(v) => {
             if (activeCategory === "Country") {
               update((d) => { d.audience.country[i]!.name = v; });
