@@ -129,16 +129,6 @@ DURATION_MAP = {
     "lifetime": "Lifetime",
 }
 
-DURATION_EMOJI = {
-    "1h": "1",
-    "5h": "5",
-    "12h": "12",
-    "1d": "1",
-    "7d": "7",
-    "30d": "30",
-    "lifetime": "∞",
-}
-
 
 def safe_get_db():
     db = get_db()
@@ -167,61 +157,93 @@ def safe_firestore_op(fn, *args, **kwargs):
         return None, "error"
 
 
+# ── Demonic UI Art ────────────────────────────────────────
+
+DEMON_ART = (
+    "⠀⠀⠀⠀⠀⠀⠀⣀⣤⣤⣤⣤⣀⠀⠀⠀⠀⠀⠀\n"
+    "⠀⠀⠀⠀⠀⣴⣿⣿⣿⣿⣿⣿⣿⣷⡀⠀⠀⠀⠀\n"
+    "⠀⠀⠀⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⠀⠀⠀⠀\n"
+    "⠀⠀⠀⢸⣿⣿⣿⣿⡿⠿⠿⣿⣿⣿⣿⡇⠀⠀⠀\n"
+    "⠀⠀⠀⠈⠛⠁⠀⠀⠀⠀⠀⠀⠙⠁⠁⠀⠀⠀⠀\n"
+)
+
+SKULL = "💀"
+DEVIL = "😈"
+FIRE = "🔥"
+PENTAGRAM = "⛧"
+BLOOD = "🩸"
+DEMON = "👹"
+HORNS = "Supply"
+CROSS_INV = "☠"
+CHAIN = "⛓"
+EYE = "👁"
+WRATH = "💢"
+BONE = "🦴"
+
+BOX_TOP = "═══════════════════════════"
+BOX_MID = "───────────────────────────"
+
+
 # ── Commands ──────────────────────────────────────────────
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
         await update.message.reply_text(
-            "⛔ **Access Denied**\n\nThis is a private admin bot."
+            f"{SKULL} **ACCESS DENIED** {SKULL}\n\n"
+            f"Your soul is not authorized.\n"
+            f"Begone, mortal."
         )
         return
 
-    name = update.effective_user.first_name or "Admin"
+    name = update.effective_user.first_name or "Soul"
     text = (
-        f"━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"  🎬 **Reel Insights Admin**\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"Welcome back, **{name}**!\n\n"
-        f"🔑 **Key Management**\n"
-        f"  /generatekey — Generate new key\n"
-        f"  /deactivate — Disable a key\n"
-        f"  /renew — Extend key duration\n\n"
-        f"📊 **Info & Stats**\n"
-        f"  /keyinfo — Key details\n"
-        f"  /listkeys — All active keys\n"
-        f"  /stats — Dashboard stats\n\n"
-        f"⚙️ **Utilities**\n"
-        f"  /setuser — Assign key to user\n"
-        f"  /fbstatus — Connection health\n\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━"
+        f"{DEVIL}═══════════════════════{DEVIL}\n"
+        f"    ⛧  **REEL INSIGHTS**  ⛧\n"
+        f"       𝐃𝐄𝐌𝐎𝐍 𝐀𝐃𝐌𝐈𝐍\n"
+        f"{DEVIL}═══════════════════════{DEVIL}\n\n"
+        f"Welcome back, **{name}**.\nThe abyss missed you.\n\n"
+        f"⛓ **_key rituals_**\n"
+        f"  /generatekey — Forge a new key\n"
+        f"  /deactivate — Obliterate a key\n"
+        f"  /renew — Resurrect a key\n\n"
+        f"👁 **_dark knowledge_**\n"
+        f"  /keyinfo — Inspect a soul\n"
+        f"  /listkeys — All bound keys\n"
+        f"  /stats — Inventory of the damned\n\n"
+        f"☠ **_forbidden arts_**\n"
+        f"  /setuser — Bind key to vessel\n"
+        f"  /fbstatus — Check the portal\n\n"
+        f"{PENTAGRAM}═══════════════════════{PENTAGRAM}"
     )
     await update.message.reply_text(text, parse_mode="Markdown")
 
 
 async def generate_key_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
-        await update.message.reply_text("⛔ Access denied.")
+        await update.message.reply_text(f"{SKULL} **THE UNDERWORLD REJECTS YOU.**")
         return
 
     args = clean_args(context.args)
     if not args:
         keyboard = [
             [
-                InlineKeyboardButton("1h", callback_data="gen_1h"),
-                InlineKeyboardButton("5h", callback_data="gen_5h"),
-                InlineKeyboardButton("12h", callback_data="gen_12h"),
+                InlineKeyboardButton("1 Hour", callback_data="gen_1h"),
+                InlineKeyboardButton("5 Hours", callback_data="gen_5h"),
+                InlineKeyboardButton("12 Hours", callback_data="gen_12h"),
             ],
             [
-                InlineKeyboardButton("1d", callback_data="gen_1d"),
-                InlineKeyboardButton("7d", callback_data="gen_7d"),
-                InlineKeyboardButton("30d", callback_data="gen_30d"),
+                InlineKeyboardButton("1 Day", callback_data="gen_1d"),
+                InlineKeyboardButton("7 Days", callback_data="gen_7d"),
+                InlineKeyboardButton("30 Days", callback_data="gen_30d"),
             ],
-            [InlineKeyboardButton("Lifetime", callback_data="gen_lifetime")],
+            [InlineKeyboardButton("∞ Lifetime", callback_data="gen_lifetime")],
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         await update.message.reply_text(
-            "🔑 **Generate Key**\n\nSelect duration:",
+            f"{FIRE} **FORGE A NEW KEY** {FIRE}\n\n"
+            f"Choose the lifespan of your creation:\n"
+            f"{BOX_MID}",
             parse_mode="Markdown",
             reply_markup=reply_markup,
         )
@@ -230,7 +252,8 @@ async def generate_key_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
     duration = args[0].lower()
     if duration not in DURATION_MAP:
         await update.message.reply_text(
-            "❌ Invalid duration.\n\nUse: `1h`, `5h`, `12h`, `1d`, `7d`, `30d`, `lifetime`",
+            f"{BLOOD} **INVALID DURATION**\n\n"
+            f"Choose: `1h`, `5h`, `12h`, `1d`, `7d`, `30d`, `lifetime`",
             parse_mode="Markdown",
         )
         return
@@ -260,28 +283,29 @@ async def _do_generate(update, context, duration, username="Unassigned"):
 
     expiry_str = expiry.strftime("%d %b %Y, %I:%M %p UTC") if expiry else "Never"
     text = (
-        f"━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"  ✅ **Key Generated**\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-        f"🔑 `{key}`\n\n"
-        f"⏱ Duration: **{DURATION_MAP[duration]}**\n"
-        f"📅 Expires: `{expiry_str}`\n"
-        f"👤 Assigned: {username}\n\n"
-        f"━━━━━━━━━━━━━━━━━━━━━━\n"
-        f"Send this key to the user."
+        f"{'⛧'*3}════════════════{'⛧'*3}\n"
+        f"  {FIRE} **KEY FORGED** {FIRE}\n"
+        f"{'⛧'*3}════════════════{'⛧'*3}\n\n"
+        f"{BLOOD} `{key}`\n\n"
+        f"⏳ Lifespan: **{DURATION_MAP[duration]}**\n"
+        f"💀 Expires: `{expiry_str}`\n"
+        f"⛓ Bound to: {username}\n\n"
+        f"{'..:: BLOOD SEALED ::..'}\n"
+        f"{'⛧'*3}════════════════{'⛧'*3}"
     )
 
     if status != "ok":
         text = (
-            f"━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"  ⚠️ **Key Generated (No DB)**\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            f"🔑 `{key}`\n\n"
-            f"⏱ Duration: **{DURATION_MAP[duration]}**\n"
-            f"📅 Expires: `{expiry_str}`\n"
-            f"👤 Assigned: {username}\n\n"
-            f"⚠️ Could not save to database.\n"
-            f"Use /fbstatus to check."
+            f"{'☠'*3}════════════════{'☠'*3}\n"
+            f"  {WRATH} **FORGING FAILED** {WRATH}\n"
+            f"{'☠'*3}════════════════{'☠'*3}\n\n"
+            f"{BLOOD} `{key}`\n\n"
+            f"⏳ Lifespan: **{DURATION_MAP[duration]}**\n"
+            f"💀 Expires: `{expiry_str}`\n"
+            f"⛓ Bound to: {username}\n\n"
+            f"⚠️ The portal is closed.\n"
+            f"Use /fbstatus to inspect.\n"
+            f"{'☠'*3}════════════════{'☠'*3}"
         )
 
     await update.message.reply_text(text, parse_mode="Markdown")
@@ -318,36 +342,35 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         expiry_str = expiry.strftime("%d %b %Y, %I:%M %p UTC") if expiry else "Never"
         text = (
-            f"━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"  ✅ **Key Generated**\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            f"🔑 `{key}`\n\n"
-            f"⏱ Duration: **{DURATION_MAP[duration]}**\n"
-            f"📅 Expires: `{expiry_str}`\n"
-            f"👤 Assigned: Unassigned\n\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"Send this key to the user."
+            f"{'⛧'*3}════════════════{'⛧'*3}\n"
+            f"  {FIRE} **KEY FORGED** {FIRE}\n"
+            f"{'⛧'*3}════════════════{'⛧'*3}\n\n"
+            f"{BLOOD} `{key}`\n\n"
+            f"⏳ Lifespan: **{DURATION_MAP[duration]}**\n"
+            f"💀 Expires: `{expiry_str}`\n"
+            f"⛓ Bound to: Unassigned\n\n"
+            f"{'..:: BLOOD SEALED ::..'}\n"
+            f"{'⛧'*3}════════════════{'⛧'*3}"
         )
         await query.edit_message_text(text, parse_mode="Markdown")
 
 
 async def deactivate_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
-        await update.message.reply_text("⛔ Access denied.")
+        await update.message.reply_text(f"{SKULL} **ACCESS DENIED.**")
         return
 
     args = clean_args(context.args)
     if not args:
         await update.message.reply_text(
-            "Usage: /deactivate `<key>`", parse_mode="Markdown"
+            f"Usage: /deactivate `<key>`", parse_mode="Markdown"
         )
         return
 
     key = args[0].upper()
 
     def _deactivate(db):
-        keys_ref = db.collection("keys")
-        q = keys_ref.where("key", "==", key)
+        q = db.collection("keys").where("key", "==", key)
         docs = q.stream()
         found = False
         for doc in docs:
@@ -359,28 +382,32 @@ async def deactivate_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if status == "ok" and result:
         text = (
-            f"━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"  🚫 **Key Deactivated**\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            f"🔑 `{key}`\n"
-            f"Status: **Deactivated**"
+            f"{'☠'*3}════════════════{'☠'*3}\n"
+            f"  {BLOOD} **KEY OBLITERATED** {BLOOD}\n"
+            f"{'☠'*3}════════════════{'☠'*3}\n\n"
+            f"🔗 `{key}`\n"
+            f"Status: **{CROSS_INV} Destroyed {CROSS_INV}**\n\n"
+            f"{'..:: ERASED FROM EXISTENCE ::..'}\n"
+            f"{'☠'*3}════════════════{'☠'*3}"
         )
-    elif status == "ok" and not result:
-        text = f"❌ Key `{key}` not found."
+    elif status == "ok":
+        text = f"{SKULL} Key `{key}` was never forged here."
     else:
-        text = "⚠️ Database error. Use /fbstatus."
+        text = f"{WRATH} The portal is closed. Use /fbstatus."
 
     await update.message.reply_text(text, parse_mode="Markdown")
 
 
 async def key_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
-        await update.message.reply_text("⛔ Access denied.")
+        await update.message.reply_text(f"{SKULL} **DENIED.**")
         return
 
     args = clean_args(context.args)
     if not args:
-        await update.message.reply_text("Usage: /keyinfo `<key>`", parse_mode="Markdown")
+        await update.message.reply_text(
+            "Usage: /keyinfo `<key>`", parse_mode="Markdown"
+        )
         return
 
     key = args[0].upper()
@@ -402,45 +429,49 @@ async def key_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
         activated = data.get("activatedAt")
         device = data.get("deviceInfo")
 
-        status_icon = {"active": "🟢", "deactivated": "🔴", "expired": "🟡"}.get(s, "⚪")
+        status_icon = {
+            "active": f"{EYE} **ALIVE**",
+            "deactivated": f"{CROSS_INV} **DEAD**",
+            "expired": f"{BONE} **DECAYED**",
+        }.get(s, "⚪ Unknown")
 
         created_str = created.strftime("%d %b %Y %H:%M UTC") if created else "N/A"
         expires_str = expires.strftime("%d %b %Y %H:%M UTC") if expires else "N/A"
-        activated_str = activated.strftime("%d %b %Y %H:%M UTC") if activated else "Not yet"
+        activated_str = activated.strftime("%d %b %Y %H:%M UTC") if activated else "Dormant"
 
-        device_str = "No device info"
+        device_str = "No vessel detected"
         if device:
             device_str = (
-                f"Platform: {device.get('platform', 'N/A')}\n"
-                f"Screen: {device.get('screen', 'N/A')}\n"
-                f"UA: {device.get('userAgent', 'N/A')[:60]}..."
+                f"Vessel: {device.get('platform', 'N/A')}\n"
+                f"Realm: {device.get('screen', 'N/A')}\n"
+                f"Sigil: {device.get('userAgent', 'N/A')[:55]}..."
             )
 
         text = (
-            f"━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"  📋 **Key Details**\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            f"🔑 `{key}`\n\n"
-            f"Status: {status_icon} **{s}**\n"
-            f"Duration: ⏱ **{DURATION_MAP.get(d, d)}**\n"
-            f"Assigned: 👤 {who}\n\n"
-            f"📅 Created: `{created_str}`\n"
-            f"⏰ Expires: `{expires_str}`\n"
-            f"🔓 Activated: `{activated_str}`\n\n"
-            f"📱 **Device Info:**\n{device_str}\n\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━"
+            f"{'⛧'*3}════════════════{'⛧'*3}\n"
+            f"  {EYE} **SOUL INVENTORY** {EYE}\n"
+            f"{'⛧'*3}════════════════{'⛧'*3}\n\n"
+            f"🔗 `{key}`\n\n"
+            f"State: {status_icon}\n"
+            f"⏳ Lifespan: **{DURATION_MAP.get(d, d)}**\n"
+            f"⛓ Vessel: {who}\n\n"
+            f"📅 Forged: `{created_str}`\n"
+            f"💀 Expires: `{expires_str}`\n"
+            f"🔓 Awakened: `{activated_str}`\n\n"
+            f"{DEMON} **Vessel Details:**\n{device_str}\n\n"
+            f"{'⛧'*3}════════════════{'⛧'*3}"
         )
     elif status == "ok":
-        text = f"❌ Key `{key}` not found."
+        text = f"{SKULL} Key `{key}` does not exist in the abyss."
     else:
-        text = "⚠️ Database error. Use /fbstatus."
+        text = f"{WRATH} Portal closed. Use /fbstatus."
 
     await update.message.reply_text(text, parse_mode="Markdown")
 
 
 async def list_keys(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
-        await update.message.reply_text("⛔ Access denied.")
+        await update.message.reply_text(f"{SKULL} **DENIED.**")
         return
 
     def _list(db):
@@ -451,13 +482,13 @@ async def list_keys(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if status == "ok":
         if not docs:
-            await update.message.reply_text("📭 No active keys.")
+            await update.message.reply_text(f"{BONE} No souls are bound.")
             return
 
         lines = [
-            f"━━━━━━━━━━━━━━━━━━━━━━",
-            f"  🔑 **Active Keys** ({len(docs)})",
-            f"━━━━━━━━━━━━━━━━━━━━━━\n",
+            f"{'⛧'*3}════════════════{'⛧'*3}",
+            f"  {CHAIN} **BOUND SOULS** ({len(docs)})",
+            f"{'⛧'*3}════════════════{'⛧'*3}\n",
         ]
         for i, doc in enumerate(docs, 1):
             d = doc.to_dict()
@@ -468,31 +499,29 @@ async def list_keys(update: Update, context: ContextTypes.DEFAULT_TYPE):
             exp_str = exp.strftime("%d %b") if exp else "∞"
             lines.append(
                 f"**{i}.** `{k}`\n"
-                f"     ⏱ {DURATION_MAP.get(dur, dur)} | 👤 {who}\n"
-                f"     📅 {exp_str}"
+                f"     ⏱ {DURATION_MAP.get(dur, dur)} | ⛓ {who}\n"
+                f"     💀 {exp_str}"
             )
-        lines.append(f"\n━━━━━━━━━━━━━━━━━━━━━━")
+        lines.append(f"\n{'⛧'*3}════════════════{'⛧'*3}")
         text = "\n".join(lines)
     else:
-        text = "⚠️ Database error. Use /fbstatus."
+        text = f"{WRATH} Portal closed. Use /fbstatus."
 
     await update.message.reply_text(text, parse_mode="Markdown")
 
 
 async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
-        await update.message.reply_text("⛔ Access denied.")
+        await update.message.reply_text(f"{SKULL} **DENIED.**")
         return
 
     def _stats(db):
         all_keys = list(db.collection("keys").stream())
         all_logs = list(db.collection("logs").stream())
-
         active = sum(1 for d in all_keys if d.to_dict().get("status") == "active")
         deactivated = sum(1 for d in all_keys if d.to_dict().get("status") == "deactivated")
         expired = sum(1 for d in all_keys if d.to_dict().get("status") == "expired")
         activations = sum(1 for d in all_logs if d.to_dict().get("action") == "activated")
-
         return {
             "total": len(all_keys),
             "active": active,
@@ -505,25 +534,25 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if status == "ok":
         text = (
-            f"━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"  📊 **Dashboard**\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            f"🔑 Total Keys: **{data['total']}**\n\n"
-            f"  🟢 Active:      **{data['active']}**\n"
-            f"  🔴 Deactivated: **{data['deactivated']}**\n"
-            f"  🟡 Expired:     **{data['expired']}**\n\n"
-            f"🔓 Activations: **{data['activations']}**\n\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━"
+            f"{'🔥'*3}════════════════{'🔥'*3}\n"
+            f"  {DEMON} **DASHBOARD OF THE DAMNED** {DEMON}\n"
+            f"{'🔥'*3}════════════════{'🔥'*3}\n\n"
+            f"⛓ Total Souls: **{data['total']}**\n\n"
+            f"  {EYE} Alive:        **{data['active']}**\n"
+            f"  {CROSS_INV} Destroyed:    **{data['deactivated']}**\n"
+            f"  {BONE} Decayed:      **{data['expired']}**\n\n"
+            f"🔓 Awakenings: **{data['activations']}**\n\n"
+            f"{'🔥'*3}════════════════{'🔥'*3}"
         )
     else:
-        text = "⚠️ Database error. Use /fbstatus."
+        text = f"{WRATH} Portal closed. Use /fbstatus."
 
     await update.message.reply_text(text, parse_mode="Markdown")
 
 
 async def set_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
-        await update.message.reply_text("⛔ Access denied.")
+        await update.message.reply_text(f"{SKULL} **DENIED.**")
         return
 
     args = clean_args(context.args)
@@ -548,23 +577,25 @@ async def set_user(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if status == "ok" and found:
         text = (
-            f"━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"  👤 **User Assigned**\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            f"🔑 `{key}`\n"
-            f"👤 → {username}"
+            f"{'⛓'*3}════════════════{'⛓'*3}\n"
+            f"  {CHAIN} **SOUL BOUND** {CHAIN}\n"
+            f"{'⛓'*3}════════════════{'⛓'*3}\n\n"
+            f"🔗 `{key}`\n"
+            f"⛓ Vessel: {username}\n\n"
+            f"{'..:: CHAINS LOCKED ::..'}\n"
+            f"{'⛓'*3}════════════════{'⛓'*3}"
         )
     elif status == "ok":
-        text = f"❌ Key `{key}` not found."
+        text = f"{SKULL} Key `{key}` was never forged."
     else:
-        text = "⚠️ Database error. Use /fbstatus."
+        text = f"{WRATH} Portal closed. Use /fbstatus."
 
     await update.message.reply_text(text, parse_mode="Markdown")
 
 
 async def renew_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
-        await update.message.reply_text("⛔ Access denied.")
+        await update.message.reply_text(f"{SKULL} **DENIED.**")
         return
 
     args = clean_args(context.args)
@@ -579,7 +610,7 @@ async def renew_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if duration not in DURATION_MAP:
         await update.message.reply_text(
-            "❌ Invalid duration.\nUse: `1h`, `5h`, `12h`, `1d`, `7d`, `30d`, `lifetime`",
+            f"{BLOOD} Invalid duration.\nUse: `1h`, `5h`, `12h`, `1d`, `7d`, `30d`, `lifetime`",
             parse_mode="Markdown",
         )
         return
@@ -600,82 +631,87 @@ async def renew_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     found, status = safe_firestore_op(_renew)
 
     if status == "ok" and found:
-        exp_str = expiry.strftime("%d %b %Y %H:%M UTC") if expiry else "Never"
+        exp_str = expiry.strftime("%d %b %Y %H:%M UTC") if expiry else "Eternal"
         text = (
-            f"━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"  🔄 **Key Renewed**\n"
-            f"━━━━━━━━━━━━━━━━━━━━━━\n\n"
-            f"🔑 `{key}`\n"
-            f"⏱ Duration: **{DURATION_MAP[duration]}**\n"
-            f"📅 Expires: `{exp_str}`"
+            f"{'🔥'*3}════════════════{'🔥'*3}\n"
+            f"  {FIRE} **SOUL RESURRECTED** {FIRE}\n"
+            f"{'🔥'*3}════════════════{'🔥'*3}\n\n"
+            f"🔗 `{key}`\n"
+            f"⏳ New Lifespan: **{DURATION_MAP[duration]}**\n"
+            f"💀 Expires: `{exp_str}`\n\n"
+            f"{'..:: REBORN IN FLAMES ::..'}\n"
+            f"{'🔥'*3}════════════════{'🔥'*3}"
         )
     elif status == "ok":
-        text = f"❌ Key `{key}` not found."
+        text = f"{SKULL} Key `{key}` does not exist."
     else:
-        text = "⚠️ Database error. Use /fbstatus."
+        text = f"{WRATH} Portal closed. Use /fbstatus."
 
     await update.message.reply_text(text, parse_mode="Markdown")
 
 
 async def fb_status(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id != ADMIN_CHAT_ID:
-        await update.message.reply_text("⛔ Access denied.")
+        await update.message.reply_text(f"{SKULL} **DENIED.**")
         return
 
     cred_b64 = os.getenv("FIREBASE_CRED_BASE64")
     cred_path = os.getenv("FIREBASE_CRED_PATH")
-
     db = safe_get_db()
 
     lines = [
-        f"━━━━━━━━━━━━━━━━━━━━━━",
-        f"  🔧 **Firebase Status**",
-        f"━━━━━━━━━━━━━━━━━━━━━━\n",
-        f"📦 Apps: **{'OK' if firebase_admin._apps else 'FAIL'}**",
-        f"🔐 CRED_BASE64: **{'set' if cred_b64 else 'missing'}**",
-        f"📄 CRED_PATH: **{cred_path or 'missing'}**",
-        f"🗄 Client: **{'connected' if db else 'disconnected'}**\n",
+        f"{'⛓'*3}════════════════{'⛓'*3}",
+        f"  {EYE} **PORTAL STATUS** {EYE}",
+        f"{'⛓'*3}════════════════{'⛓'*3}\n",
+        f"📦 Core: **{'{OK}' if firebase_admin._apps else '{FAIL}'}**",
+        f"🔐 CRED_BASE64: **{'{SET}' if cred_b64 else '{MISSING}'}**",
+        f"📄 CRED_PATH: **{cred_path or '{MISSING}'}**",
+        f"🗄 Portal: **{'{OPEN}' if db else '{SEALED}'}**\n",
     ]
 
     if db:
         try:
             list(db.collection("keys").limit(1).stream())
-            lines.append("✅ Read/Write: **OK**")
+            lines.append("✅ Read/Write: **{PERMITTED}**")
         except Exception as e:
-            lines.append(f"❌ Read/Write: **FAIL**\n`{str(e)[:60]}`")
+            lines.append(f"❌ Read/Write: **{{BLOCKED}}**\n`{str(e)[:55]}`")
             global _fb_initialized
             _fb_initialized = False
             db = init_firebase()
-            lines.append(f"🔄 Reconnect: **{'OK' if db else 'FAIL'}**")
+            lines.append(f"🔄 Reconnect: **{'{OPEN}' if db else '{FAILED}'}**")
     else:
-        lines.append("🔄 Reconnecting...")
+        lines.append("🔄 Attempting to reopen portal...")
         db = retry_firebase()
-        lines.append(f"🔄 Reconnect: **{'OK' if db else 'FAIL'}**")
+        lines.append(f"🔄 Reconnect: **{'{OPEN}' if db else '{FAILED}'}**")
         if not db:
-            lines.append("\n⚠️ Check `FIREBASE_CRED_BASE64` in Render env vars.")
+            lines.append(f"\n{WRATH} Check `FIREBASE_CRED_BASE64` in Render env vars.")
 
-    lines.append(f"\n━━━━━━━━━━━━━━━━━━━━━━")
+    lines.append(f"\n{'⛓'*3}════════════════{'⛓'*3}")
     await update.message.reply_text("\n".join(lines), parse_mode="Markdown")
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.effective_user.id == ADMIN_CHAT_ID:
-        await update.message.reply_text("🤔 Unknown command.\nUse /start for help.")
+        await update.message.reply_text(
+            f"{DEVIL} Unknown incantation.\nUse /start for the grimoire."
+        )
     else:
-        await update.message.reply_text("⛔ This is a private admin bot.")
+        await update.message.reply_text(
+            f"{SKULL} **YOUR SOUL IS NOT WELCOME HERE.**"
+        )
 
 
 async def post_init(application: Application):
     await application.bot.set_my_commands([
-        BotCommand("start", "Show help"),
-        BotCommand("generatekey", "Generate a new key"),
-        BotCommand("deactivate", "Deactivate a key"),
-        BotCommand("keyinfo", "Get key details"),
-        BotCommand("listkeys", "List all active keys"),
-        BotCommand("stats", "Show statistics"),
-        BotCommand("setuser", "Assign key to user"),
-        BotCommand("renew", "Renew/extend key"),
-        BotCommand("fbstatus", "Check Firebase connection"),
+        BotCommand("start", "Open the grimoire"),
+        BotCommand("generatekey", "Forge a new key"),
+        BotCommand("deactivate", "Obliterate a key"),
+        BotCommand("keyinfo", "Inspect a soul"),
+        BotCommand("listkeys", "List bound souls"),
+        BotCommand("stats", "Dashboard of the damned"),
+        BotCommand("setuser", "Bind key to vessel"),
+        BotCommand("renew", "Resurrect a key"),
+        BotCommand("fbstatus", "Check the portal"),
     ])
 
 
