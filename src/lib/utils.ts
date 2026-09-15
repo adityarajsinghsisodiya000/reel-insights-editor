@@ -96,33 +96,32 @@ function seededRandom(seed: number) {
 
 /**
  * Generate realistic Instagram-like graph points based on total views.
- * Each views value produces a unique shape with growth trend, dips, and peaks.
+ * Graph always goes upward (bottom to top) with slight variations.
+ * Different views values produce slightly different curves.
  */
 export function generateGraphPoints(viewsTotal: number, count = 20): { time: number; value: number }[] {
   const rng = seededRandom(Math.round(viewsTotal));
   const points: { time: number; value: number }[] = [];
 
-  // Generate random weights with upward bias
-  const weights: number[] = [];
-  let totalWeight = 0;
+  // Generate smooth upward curve with small random variations
   for (let i = 0; i < count; i++) {
-    // Upward trend: later points tend to be higher
-    const trend = 0.3 + (i / (count - 1)) * 0.7;
-    // Random variation
-    const noise = 0.3 + rng() * 1.4;
-    // Occasional dips (20% chance)
-    const dip = rng() < 0.2 ? 0.3 + rng() * 0.4 : 1;
-    const w = trend * noise * dip;
-    weights.push(w);
-    totalWeight += w;
-  }
+    const t = i / (count - 1); // 0 to 1
 
-  // Normalize weights so sum = viewsTotal
-  for (let i = 0; i < count; i++) {
-    points.push({
-      time: i,
-      value: Math.round((weights[i]! / totalWeight) * viewsTotal),
-    });
+    // Base growth curve: starts slow, accelerates, then plateaus
+    // Uses a sigmoid-like curve for realistic growth
+    const baseCurve = t < 0.1
+      ? t * 2 // Initial slow start
+      : t < 0.7
+      ? 0.2 + (t - 0.1) * 1.2 // Main growth phase
+      : 0.92 + (t - 0.7) * 0.267; // Plateau phase
+
+    // Small random variation (±15%)
+    const variation = 0.85 + rng() * 0.3;
+
+    // Calculate value: base curve × variation × total views
+    const value = Math.round(baseCurve * variation * viewsTotal);
+
+    points.push({ time: i, value: Math.max(0, value) });
   }
 
   // First point is always 0 (reel just posted)
