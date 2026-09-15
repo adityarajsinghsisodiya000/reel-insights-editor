@@ -6,7 +6,7 @@ import threading
 import json
 import base64
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dotenv import load_dotenv
 from telegram import Update, BotCommand, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, MessageHandler, CallbackQueryHandler, filters, ContextTypes
@@ -16,6 +16,8 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 
 load_dotenv()
+
+IST = timezone(timedelta(hours=5, minutes=30))
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_CHAT_ID = int(os.getenv("ADMIN_CHAT_ID", "0"))
@@ -103,7 +105,7 @@ def clean_args(args):
 
 
 def get_expiry(duration: str):
-    now = datetime.utcnow()
+    now = datetime.now(IST)
     if duration == "1h":
         return now + timedelta(hours=1)
     elif duration == "5h":
@@ -270,7 +272,7 @@ async def _do_generate(update, context, duration, username="Unassigned"):
         "key": key,
         "status": "active",
         "duration": duration,
-        "createdAt": datetime.utcnow(),
+        "createdAt": datetime.now(IST),
         "expiresAt": expiry,
         "activatedAt": None,
         "deviceFingerprint": None,
@@ -281,7 +283,7 @@ async def _do_generate(update, context, duration, username="Unassigned"):
 
     _, status = safe_firestore_op(lambda db: db.collection("keys").add(key_data))
 
-    expiry_str = expiry.strftime("%d %b %Y, %I:%M %p UTC") if expiry else "Never"
+    expiry_str = expiry.strftime("%d %b %Y, %I:%M %p IST") if expiry else "Never"
     text = (
         f"{'⛧'*3}════════════════{'⛧'*3}\n"
         f"  {FIRE} **KEY FORGED** {FIRE}\n"
@@ -330,7 +332,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "key": key,
             "status": "active",
             "duration": duration,
-            "createdAt": datetime.utcnow(),
+            "createdAt": datetime.now(IST),
             "expiresAt": expiry,
             "activatedAt": None,
             "deviceFingerprint": None,
@@ -340,7 +342,7 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         }
         safe_firestore_op(lambda db: db.collection("keys").add(key_data))
 
-        expiry_str = expiry.strftime("%d %b %Y, %I:%M %p UTC") if expiry else "Never"
+        expiry_str = expiry.strftime("%d %b %Y, %I:%M %p IST") if expiry else "Never"
         text = (
             f"{'⛧'*3}════════════════{'⛧'*3}\n"
             f"  {FIRE} **KEY FORGED** {FIRE}\n"
@@ -435,9 +437,9 @@ async def key_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "expired": f"{BONE} **DECAYED**",
         }.get(s, "⚪ Unknown")
 
-        created_str = created.strftime("%d %b %Y %H:%M UTC") if created else "N/A"
-        expires_str = expires.strftime("%d %b %Y %H:%M UTC") if expires else "N/A"
-        activated_str = activated.strftime("%d %b %Y %H:%M UTC") if activated else "Dormant"
+        created_str = created.strftime("%d %b %Y %H:%M IST") if created else "N/A"
+        expires_str = expires.strftime("%d %b %Y %H:%M IST") if expires else "N/A"
+        activated_str = activated.strftime("%d %b %Y %H:%M IST") if activated else "Dormant"
 
         device_str = "No vessel detected"
         if device:
@@ -631,7 +633,7 @@ async def renew_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     found, status = safe_firestore_op(_renew)
 
     if status == "ok" and found:
-        exp_str = expiry.strftime("%d %b %Y %H:%M UTC") if expiry else "Eternal"
+        exp_str = expiry.strftime("%d %b %Y %H:%M IST") if expiry else "Eternal"
         text = (
             f"{'🔥'*3}════════════════{'🔥'*3}\n"
             f"  {FIRE} **SOUL RESURRECTED** {FIRE}\n"
