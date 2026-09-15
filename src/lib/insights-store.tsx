@@ -117,6 +117,7 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
       const followsAction = next.engagement.actions.find((a) => a.id === "fl");
       if (followsStat && followsAction) followsAction.value = followsStat.value;
       // Auto-calculate Viewers (71% of Views) and Profile visits (2% of Viewers)
+      const viewsStat = next.overview.stats.find((s) => s.id === "views");
       const viewersStat = next.overview.stats.find((s) => s.id === "viewers");
       const profileAction = next.engagement.actions.find((a) => a.id === "pv");
       if (viewsStat && viewersStat) {
