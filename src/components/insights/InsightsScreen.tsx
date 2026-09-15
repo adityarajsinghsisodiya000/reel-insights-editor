@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Pencil, TrendingUp } from "lucide-react";
+import { ArrowLeft, MoreVertical, Pencil, TrendingUp } from "lucide-react";
 import { useInsights } from "@/lib/insights-store";
 import { LikeIcon, CommentIcon, RepostIcon, ShareIcon, SaveIcon } from "./icons";
 import { Editable } from "./Editable";
@@ -17,6 +17,7 @@ export function InsightsScreen() {
   const [menu, setMenu] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const held = useRef(false);
+  const lastClick = useRef(0);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -38,7 +39,17 @@ export function InsightsScreen() {
   };
   const endHold = () => {
     if (timer.current) clearTimeout(timer.current);
-    if (!held.current && !menu) setEditMode(!editMode);
+  };
+
+  const handleTitleClick = () => {
+    if (held.current) return;
+    const now = Date.now();
+    if (now - lastClick.current < 300) {
+      setEditMode(!editMode);
+      lastClick.current = 0;
+    } else {
+      lastClick.current = now;
+    }
   };
 
   const tabs = [
@@ -59,7 +70,8 @@ export function InsightsScreen() {
           <h1
             onPointerDown={startHold}
             onPointerUp={endHold}
-            onPointerLeave={() => timer.current && clearTimeout(timer.current)}
+            onPointerLeave={() => { timer.current && clearTimeout(timer.current); endHold(); }}
+            onClick={handleTitleClick}
             onContextMenu={(e) => e.preventDefault()}
             className="flex-1 text-[19px] font-bold text-ig-text cursor-pointer select-none"
           >
@@ -68,6 +80,7 @@ export function InsightsScreen() {
         </Editable>
         <div className="flex shrink-0 items-center gap-2">
           <TrendingUp className="h-6 w-6 text-ig-text" />
+          <MoreVertical className="h-5 w-5 text-ig-dim pointer-events-none" />
         </div>
       </header>
 
