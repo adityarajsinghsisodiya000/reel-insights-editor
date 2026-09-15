@@ -85,7 +85,7 @@ export const defaultData: InsightsData = {
     summaryTitle: "Summary",
     stats: [
       { id: "views", label: "Views", value: "3,441" },
-      { id: "viewers", label: "Viewers", value: "2,461" },
+      { id: "pv", label: "Profile visits", value: "4.5%" },
       { id: "awt", label: "Average watch time", value: "4s" },
       { id: "follows", label: "Follows", value: "0" },
     ],
@@ -175,7 +175,7 @@ export const defaultData: InsightsData = {
     actionsTitle: "Actions after viewing",
     actions: [
       { id: "fl", label: "Follows", value: "0" },
-      { id: "pv", label: "Profile visits", value: "5" },
+      { id: "pv", label: "Profile visits", value: "4.5%" },
     ],
     interactionsTitle: "Interactions",
     interactionRows: [
