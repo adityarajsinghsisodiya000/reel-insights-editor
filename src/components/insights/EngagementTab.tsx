@@ -2,6 +2,7 @@ import { useInsights } from "@/lib/insights-store";
 import { SimpleChart } from "./EditableChart";
 import { ReelPreview } from "./ReelPreview";
 import { SectionTitle } from "./Rows";
+import { Editable } from "./Editable";
 
 function formatLikes(pct: number): string {
   return `${pct.toFixed(1)}%`;
@@ -30,8 +31,12 @@ export function EngagementTab() {
       <SectionTitle title={e.actionsTitle} onChange={(v) => update((d) => { d.engagement.actionsTitle = v; })} />
       {e.actions.map((r, i) => (
         <div key={r.id} className="flex items-center justify-between py-[13px]">
-          <span className="text-[16px] text-ig-text">{r.label}</span>
-          <span className="text-[16px] text-ig-text">{r.value}</span>
+          <Editable value={r.label} onChange={(v) => update((d) => { d.engagement.actions[i]!.label = v; })} label="Action label">
+            <span className="text-[16px] text-ig-text">{r.label}</span>
+          </Editable>
+          <Editable value={r.value} onChange={(v) => update((d) => { d.engagement.actions[i]!.value = v; })} kind="number" label="Action value">
+            <span className="text-[16px] text-ig-text">{r.value}</span>
+          </Editable>
         </div>
       ))}
 

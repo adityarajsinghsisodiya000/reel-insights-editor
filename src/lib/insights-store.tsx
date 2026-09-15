@@ -107,7 +107,13 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
   const update = useCallback((fn: (draft: InsightsData) => void) => {
     setData((prev) => {
       const next = JSON.parse(JSON.stringify(prev)) as InsightsData;
+
+      // Snapshot old values before applying changes
+      const oldViews = prev.overview.stats.find((s) => s.id === "views")?.value ?? "0";
+      const oldViewers = prev.overview.stats.find((s) => s.id === "viewers")?.value ?? "0";
+
       fn(next);
+
       // Sync interactions between root and engagement
       const syncMap: Record<string, string> = {
         likes: "Likes",
@@ -126,7 +132,8 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
       const followsStat = next.overview.stats.find((s) => s.id === "follows");
       const followsAction = next.engagement.actions.find((a) => a.id === "fl");
       if (followsStat && followsAction) followsAction.value = followsStat.value;
-      // Format Views with commas and regenerate graph points based on Views
+
+      // Format Views and regenerate graph points
       const viewsStat = next.overview.stats.find((s) => s.id === "views");
       if (viewsStat) {
         viewsStat.value = formatWithCommas(viewsStat.value);
@@ -136,6 +143,27 @@ export function InsightsProvider({ children }: { children: ReactNode }) {
           next.overview.viewsGraph.points = generateGraphPoints(viewsNum, pts.length);
         }
       }
+
+      // Auto-calc Viewers when Views changes (95%)
+      const newViews = next.overview.stats.find((s) => s.id === "views")?.value ?? "0";
+      const viewersStat = next.overview.stats.find((s) => s.id === "viewers");
+      if (oldViews !== newViews && viewersStat) {
+        const viewsNum = Number(newViews.replace(/[^\d.-]/g, ""));
+        if (Number.isFinite(viewsNum) && viewsNum > 0) {
+          viewersStat.value = formatWithCommas(String(Math.round(viewsNum * 0.95)));
+        }
+      }
+
+      // Auto-calc Profile visits when Viewers changes (0.3%)
+      const newViewers = next.overview.stats.find((s) => s.id === "viewers")?.value ?? "0";
+      const profileAction = next.engagement.actions.find((a) => a.id === "pv");
+      if ((oldViews !== newViews || oldViewers !== newViewers) && profileAction) {
+        const viewersNum = Number(newViewers.replace(/[^\d.-]/g, ""));
+        if (Number.isFinite(viewersNum) && viewersNum > 0) {
+          profileAction.value = formatWithCommas(String(Math.round(viewersNum * 0.003)));
+        }
+      }
+
       return next;
     });
   }, []);
