@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, MoreVertical, Pencil, TrendingUp } from "lucide-react";
+import { ArrowLeft, Pencil, TrendingUp } from "lucide-react";
 import { useInsights } from "@/lib/insights-store";
 import { LikeIcon, CommentIcon, RepostIcon, ShareIcon, SaveIcon } from "./icons";
 import { Editable } from "./Editable";
@@ -32,13 +32,13 @@ export function InsightsScreen() {
     held.current = false;
     timer.current = setTimeout(() => {
       held.current = true;
-      setEditMode(true);
+      setMenu(true);
       if (navigator.vibrate) navigator.vibrate(15);
     }, 600);
   };
   const endHold = () => {
     if (timer.current) clearTimeout(timer.current);
-    if (!held.current && !editMode) setMenu(true);
+    if (!held.current && !menu) setEditMode(!editMode);
   };
 
   const tabs = [
@@ -57,25 +57,17 @@ export function InsightsScreen() {
         <ArrowLeft className="h-6 w-6 shrink-0 text-ig-text" />
         <Editable value={data.headerTitle} onChange={(v) => update((d) => { d.headerTitle = v; })} label="Screen title">
           <h1
-            onClick={() => setEditMode(!editMode)}
-            className="flex-1 text-[19px] font-bold text-ig-text cursor-pointer"
+            onPointerDown={startHold}
+            onPointerUp={endHold}
+            onPointerLeave={() => timer.current && clearTimeout(timer.current)}
+            onContextMenu={(e) => e.preventDefault()}
+            className="flex-1 text-[19px] font-bold text-ig-text cursor-pointer select-none"
           >
             {data.headerTitle}
           </h1>
         </Editable>
         <div className="flex shrink-0 items-center gap-2">
           <TrendingUp className="h-6 w-6 text-ig-text" />
-          <button
-            type="button"
-            aria-label="Menu — hold to edit"
-            className="-mr-2 flex h-11 w-11 items-center justify-center rounded-full text-ig-text"
-            onPointerDown={startHold}
-            onPointerUp={endHold}
-            onPointerLeave={() => timer.current && clearTimeout(timer.current)}
-            onContextMenu={(e) => e.preventDefault()}
-          >
-            <MoreVertical className="h-5 w-5 text-ig-text" />
-          </button>
         </div>
       </header>
 
