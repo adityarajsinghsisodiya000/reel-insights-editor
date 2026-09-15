@@ -37,7 +37,13 @@ def clean_args(args):
 
 def get_expiry(duration: str):
     now = datetime.utcnow()
-    if duration == "1d":
+    if duration == "1h":
+        return now + timedelta(hours=1)
+    elif duration == "5h":
+        return now + timedelta(hours=5)
+    elif duration == "12h":
+        return now + timedelta(hours=12)
+    elif duration == "1d":
         return now + timedelta(days=1)
     elif duration == "7d":
         return now + timedelta(days=7)
@@ -47,6 +53,9 @@ def get_expiry(duration: str):
 
 
 DURATION_MAP = {
+    "1h": "1 Hour",
+    "5h": "5 Hours",
+    "12h": "12 Hours",
     "1d": "1 Day",
     "7d": "7 Days",
     "30d": "30 Days",
@@ -62,9 +71,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     help_text = (
         "**Reel Insights Admin Bot**\n\n"
         "**Commands:**\n"
-        "/generatekey `<duration>` `[@username]` - Generate a new key\n"
-        "  Duration: `1d`, `7d`, `30d`, `lifetime`\n"
-        "  Example: `/generatekey 7d @username`\n\n"
+        "/generatekey `<duration>` - Generate a new key\n"
+        "  Duration: `1h`, `5h`, `12h`, `1d`, `7d`, `30d`, `lifetime`\n"
+        "  Example: `/generatekey 7d`\n\n"
         "/deactivate `<key>` - Deactivate a key\n"
         "/keyinfo `<key>` - Get key details\n"
         "/listkeys - List all active keys\n"
@@ -83,12 +92,12 @@ async def generate_key_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     args = clean_args(context.args)
     if not args:
-        await update.message.reply_text("Usage: /generatekey `<duration>` `[@username]`", parse_mode="Markdown")
+        await update.message.reply_text("Usage: /generatekey `<duration>`\nDuration: `1h`, `5h`, `12h`, `1d`, `7d`, `30d`, `lifetime`", parse_mode="Markdown")
         return
 
     duration = args[0].lower()
     if duration not in DURATION_MAP:
-        await update.message.reply_text(f"Invalid duration. Use: `1d`, `7d`, `30d`, `lifetime`", parse_mode="Markdown")
+        await update.message.reply_text(f"Invalid duration. Use: `1h`, `5h`, `12h`, `1d`, `7d`, `30d`, `lifetime`", parse_mode="Markdown")
         return
 
     username = args[1] if len(args) > 1 else "Unassigned"
@@ -301,7 +310,7 @@ async def renew_key(update: Update, context: ContextTypes.DEFAULT_TYPE):
     duration = args[1].lower()
 
     if duration not in DURATION_MAP:
-        await update.message.reply_text(f"Invalid duration. Use: `1d`, `7d`, `30d`, `lifetime`", parse_mode="Markdown")
+        await update.message.reply_text(f"Invalid duration. Use: `1h`, `5h`, `12h`, `1d`, `7d`, `30d`, `lifetime`", parse_mode="Markdown")
         return
 
     expiry = get_expiry(duration)
