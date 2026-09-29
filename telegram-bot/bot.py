@@ -266,14 +266,13 @@ async def generate_key_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def _do_generate(update, context, duration, username="Unassigned"):
     key = generate_key()
-    expiry = get_expiry(duration)
 
     key_data = {
         "key": key,
-        "status": "active",
+        "status": "inactive",
         "duration": duration,
         "createdAt": datetime.now(IST),
-        "expiresAt": expiry,
+        "expiresAt": None,
         "activatedAt": None,
         "deviceFingerprint": None,
         "localStorageId": None,
@@ -283,15 +282,15 @@ async def _do_generate(update, context, duration, username="Unassigned"):
 
     _, status = safe_firestore_op(lambda db: db.collection("keys").add(key_data))
 
-    expiry_str = expiry.strftime("%d %b %Y, %I:%M %p IST") if expiry else "Never"
     text = (
         f"{'⛧'*3}════════════════{'⛧'*3}\n"
         f"  {FIRE} **KEY FORGED** {FIRE}\n"
         f"{'⛧'*3}════════════════{'⛧'*3}\n\n"
         f"{BLOOD} `{key}`\n\n"
-        f"⏳ Lifespan: **{DURATION_MAP[duration]}**\n"
-        f"💀 Expires: `{expiry_str}`\n"
+        f"⏳ Duration: **{DURATION_MAP[duration]}**\n"
+        f"🔴 Status: **INACTIVE**\n"
         f"⛓ Bound to: {username}\n\n"
+        f"⚠ Timer starts on first activation.\n"
         f"{'..:: BLOOD SEALED ::..'}\n"
         f"{'⛧'*3}════════════════{'⛧'*3}"
     )
@@ -302,8 +301,7 @@ async def _do_generate(update, context, duration, username="Unassigned"):
             f"  {WRATH} **FORGING FAILED** {WRATH}\n"
             f"{'☠'*3}════════════════{'☠'*3}\n\n"
             f"{BLOOD} `{key}`\n\n"
-            f"⏳ Lifespan: **{DURATION_MAP[duration]}**\n"
-            f"💀 Expires: `{expiry_str}`\n"
+            f"⏳ Duration: **{DURATION_MAP[duration]}**\n"
             f"⛓ Bound to: {username}\n\n"
             f"⚠️ The portal is closed.\n"
             f"Use /fbstatus to inspect.\n"
@@ -326,14 +324,13 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if duration not in DURATION_MAP:
             return
         key = generate_key()
-        expiry = get_expiry(duration)
 
         key_data = {
             "key": key,
-            "status": "active",
+            "status": "inactive",
             "duration": duration,
             "createdAt": datetime.now(IST),
-            "expiresAt": expiry,
+            "expiresAt": None,
             "activatedAt": None,
             "deviceFingerprint": None,
             "localStorageId": None,
@@ -342,15 +339,15 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
         }
         safe_firestore_op(lambda db: db.collection("keys").add(key_data))
 
-        expiry_str = expiry.strftime("%d %b %Y, %I:%M %p IST") if expiry else "Never"
         text = (
             f"{'⛧'*3}════════════════{'⛧'*3}\n"
             f"  {FIRE} **KEY FORGED** {FIRE}\n"
             f"{'⛧'*3}════════════════{'⛧'*3}\n\n"
             f"{BLOOD} `{key}`\n\n"
-            f"⏳ Lifespan: **{DURATION_MAP[duration]}**\n"
-            f"💀 Expires: `{expiry_str}`\n"
+            f"⏳ Duration: **{DURATION_MAP[duration]}**\n"
+            f"🔴 Status: **INACTIVE**\n"
             f"⛓ Bound to: Unassigned\n\n"
+            f"⚠ Timer starts on first activation.\n"
             f"{'..:: BLOOD SEALED ::..'}\n"
             f"{'⛧'*3}════════════════{'⛧'*3}"
         )
@@ -433,13 +430,14 @@ async def key_info(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         status_icon = {
             "active": f"{EYE} **ALIVE**",
+            "inactive": f"🔴 **DORMANT**",
             "deactivated": f"{CROSS_INV} **DEAD**",
             "expired": f"{BONE} **DECAYED**",
         }.get(s, "⚪ Unknown")
 
         created_str = created.strftime("%d %b %Y %H:%M IST") if created else "N/A"
-        expires_str = expires.strftime("%d %b %Y %H:%M IST") if expires else "N/A"
-        activated_str = activated.strftime("%d %b %Y %H:%M IST") if activated else "Dormant"
+        expires_str = "Not yet" if s == "inactive" else (expires.strftime("%d %b %Y %H:%M IST") if expires else "Eternal")
+        activated_str = activated.strftime("%d %b %Y %H:%M IST") if activated else "Not yet"
 
         device_str = "No vessel detected"
         if device:

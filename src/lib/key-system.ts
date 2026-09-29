@@ -19,7 +19,7 @@ const LOGS_COLLECTION = "logs";
 export interface KeyData {
   id?: string;
   key: string;
-  status: "active" | "deactivated" | "expired";
+  status: "active" | "inactive" | "deactivated" | "expired";
   duration: "1h" | "5h" | "12h" | "1d" | "7d" | "30d" | "lifetime";
   createdAt: Timestamp | null;
   expiresAt: Timestamp | null;
@@ -38,6 +38,20 @@ export interface ValidationResult {
   valid: boolean;
   error?: string;
   keyData?: KeyData;
+}
+
+function getExpiryFromDuration(duration: string): Date | null {
+  const now = new Date();
+  switch (duration) {
+    case "1h": return new Date(now.getTime() + 1 * 60 * 60 * 1000);
+    case "5h": return new Date(now.getTime() + 5 * 60 * 60 * 1000);
+    case "12h": return new Date(now.getTime() + 12 * 60 * 60 * 1000);
+    case "1d": return new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
+    case "7d": return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    case "30d": return new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    case "lifetime": return null;
+    default: return null;
+  }
 }
 
 export async function validateAndActivateKey(inputKey: Promise<string>): Promise<ValidationResult> {
@@ -71,7 +85,28 @@ export async function validateAndActivateKey(inputKey: Promise<string>): Promise
     const deviceId = await getOrCreateDeviceId();
     const fingerprint = await generateDeviceFingerprint();
 
+    // First time activation — key was inactive, now activate and start timer
+    if (keyData.status === "inactive") {
+      const expiry = getExpiryFromDuration(keyData.duration);
+      await updateDoc(doc(getDb(), KEYS_COLLECTION, keyDoc.id), {
+        status: "active",
+        expiresAt: expiry ? Timestamp.fromDate(expiry) : null,
+        activatedAt: serverTimestamp(),
+        deviceFingerprint: fingerprint,
+        localStorageId: deviceId,
+        deviceInfo: {
+          userAgent: navigator.userAgent,
+          screen: `${screen.width}x${screen.height}`,
+          platform: navigator.platform,
+        },
+      });
+      await logAction(normalizedKey, "activated");
+      const updatedData = { ...keyData, status: "active" as const, expiresAt: expiry ? Timestamp.fromDate(expiry) : null };
+      return { valid: true, keyData: updatedData };
+    }
+
     if (!keyData.deviceFingerprint) {
+      const expiry = getExpiryFromDuration(keyData.duration);
       await updateDoc(doc(getDb(), KEYS_COLLECTION, keyDoc.id), {
         deviceFingerprint: fingerprint,
         localStorageId: deviceId,
@@ -120,6 +155,7 @@ async function logAction(key: string, action: string) {
 
 export function isKeyStillActive(keyData: KeyData): boolean {
   if (keyData.status === "deactivated" || keyData.status === "expired") return false;
+  if (keyData.status === "inactive") return true;
   if (keyData.duration === "lifetime") return true;
   if (!keyData.expiresAt) return true;
   return keyData.expiresAt.toDate() > new Date();
